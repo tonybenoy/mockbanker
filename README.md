@@ -2,7 +2,7 @@
 
 Generate valid, checksum-correct **IBANs** (96 countries) and **personal ID codes** (31 countries) directly in your browser. No installation, no server — everything runs client-side via WebAssembly.
 
-**[Try it live](https://sunyata-ou.github.io/mockbanker/)**
+**[Try it live](https://tonybenoy.github.io/mockbanker/)**
 
 ## Features
 

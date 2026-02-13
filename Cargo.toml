@@ -5,7 +5,7 @@ edition = "2024"
 authors = ["Tony Benoy <me@tonybenoy.com>"]
 description = "Browser-based generator for valid test IBANs and personal ID codes — 96 countries, checksum-correct, runs entirely in WebAssembly"
 license = "MIT"
-repository = "https://github.com/Sunyata-OU/mockbanker"
+repository = "https://github.com/tonybenoy/mockbanker"
 keywords = ["iban", "test-data", "wasm", "personal-id", "generator"]
 categories = ["wasm", "web-programming", "development-tools::testing"]
 
