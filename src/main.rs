@@ -54,11 +54,22 @@ export function init_theme() {
     }
     return window.matchMedia("(prefers-color-scheme: light)").matches;
 }
+
+export function download_csv(filename, content) {
+    const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+}
 "#)]
 extern "C" {
     fn copy_text(text: &str);
     fn toggle_theme() -> bool;
     fn init_theme() -> bool;
+    fn download_csv(filename: &str, content: &str);
 }
 
 fn copy_to_clipboard(text: &str) {
@@ -169,6 +180,17 @@ fn IbanTab() -> impl IntoView {
         copy_to_clipboard(&text);
     };
 
+    let save_csv = move |_| {
+        let rows = results.get();
+        let use_spaces = spaces.get();
+        let mut csv = String::from("IBAN,Valid\n");
+        for row in rows.iter() {
+            let display = if use_spaces { &row.formatted } else { &row.raw };
+            csv.push_str(&format!("{},{}\n", display, if row.valid { "Yes" } else { "No" }));
+        }
+        download_csv("ibans.csv", &csv);
+    };
+
     view! {
         <div class="controls">
             <div class="field">
@@ -213,6 +235,7 @@ fn IbanTab() -> impl IntoView {
 
             <Show when=move || !results.get().is_empty()>
                 <button class="btn btn-secondary" on:click=copy_all>"Copy all"</button>
+                <button class="btn btn-secondary" on:click=save_csv>"Download CSV"</button>
             </Show>
         </div>
 
@@ -328,6 +351,21 @@ fn PersonalIdTab() -> impl IntoView {
         copy_to_clipboard(&text);
     };
 
+    let save_csv = move |_| {
+        let rows = results.get();
+        let mut csv = String::from("Code,Gender,Date of Birth,Valid\n");
+        for row in rows.iter() {
+            csv.push_str(&format!(
+                "{},{},{},{}\n",
+                row.code,
+                row.gender,
+                row.dob,
+                if row.valid { "Yes" } else { "No" }
+            ));
+        }
+        download_csv("personal_ids.csv", &csv);
+    };
+
     let countries_for_select = id_countries.clone();
 
     view! {
@@ -386,6 +424,7 @@ fn PersonalIdTab() -> impl IntoView {
 
             <Show when=move || !results.get().is_empty()>
                 <button class="btn btn-secondary" on:click=copy_all>"Copy all"</button>
+                <button class="btn btn-secondary" on:click=save_csv>"Download CSV"</button>
             </Show>
         </div>
 
