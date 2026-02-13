@@ -29,9 +29,36 @@ export function copy_text(text) {
         navigator.clipboard.writeText(text).catch(() => {});
     }
 }
+
+export function toggle_theme() {
+    const root = document.documentElement;
+    const current = root.getAttribute("data-theme");
+    let next;
+    if (current === "light") {
+        next = "dark";
+    } else if (current === "dark") {
+        next = "light";
+    } else {
+        next = window.matchMedia("(prefers-color-scheme: light)").matches ? "dark" : "light";
+    }
+    root.setAttribute("data-theme", next);
+    localStorage.setItem("theme", next);
+    return next === "light";
+}
+
+export function init_theme() {
+    const saved = localStorage.getItem("theme");
+    if (saved) {
+        document.documentElement.setAttribute("data-theme", saved);
+        return saved === "light";
+    }
+    return window.matchMedia("(prefers-color-scheme: light)").matches;
+}
 "#)]
 extern "C" {
     fn copy_text(text: &str);
+    fn toggle_theme() -> bool;
+    fn init_theme() -> bool;
 }
 
 fn copy_to_clipboard(text: &str) {
@@ -41,12 +68,20 @@ fn copy_to_clipboard(text: &str) {
 #[component]
 fn App() -> impl IntoView {
     let active_tab = RwSignal::new("iban");
+    let is_light = RwSignal::new(init_theme());
 
     view! {
         <div class="app">
             <header>
                 <h1>"MockBanker"</h1>
                 <p>"Generate valid, checksum-correct IBANs and personal IDs \u{2014} runs entirely in your browser"</p>
+                <button
+                    class="theme-toggle"
+                    aria-label="Toggle theme"
+                    on:click=move |_| { is_light.set(toggle_theme()); }
+                >
+                    {move || if is_light.get() { "\u{263e}" } else { "\u{2600}" }}
+                </button>
             </header>
 
             <div class="tabs">
@@ -73,8 +108,10 @@ fn App() -> impl IntoView {
 
             <footer>
                 <p>
-                    "Powered by "
-                    <a href="https://github.com/Sunyata-OU/EU-Test-Data-Generator" target="_blank">"eu-test-data-generator"</a>
+                    "Made with \u{2764} by "
+                    <a href="https://github.com/tonybenoy" target="_blank">"Tony Benoy"</a>
+                    " & "
+                    <a href="https://claude.ai" target="_blank">"Claude"</a>
                     " \u{00b7} Built with Rust & WebAssembly"
                 </p>
             </footer>

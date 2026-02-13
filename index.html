@@ -3,23 +3,58 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MockBanker — IBAN & Personal ID Generator</title>
-    <meta name="description" content="MockBanker: Generate valid, checksum-correct test IBANs and personal ID codes for 96 countries. Free, instant, runs entirely in your browser via WebAssembly." />
-    <meta name="keywords" content="IBAN generator, test data, personal ID, PESEL, personnummer, codice fiscale, JMBG, BSN, NIR, DNI, NIF, EGN, AMKA, checksum, European, WASM, mock data" />
+    <title>MockBanker — Free IBAN Generator & Personal ID Code Generator for 96 Countries</title>
+    <meta name="description" content="MockBanker: Generate valid, checksum-correct test IBANs and personal ID codes (PESEL, personnummer, codice fiscale, BSN, NIR, DNI and more) for 96 countries. Free, instant, no signup — runs entirely in your browser via WebAssembly." />
+    <meta name="keywords" content="IBAN generator, test IBAN, fake IBAN, IBAN validator, personal ID generator, PESEL generator, personnummer generator, codice fiscale generator, JMBG generator, BSN generator, NIR generator, DNI generator, NIF generator, EGN generator, AMKA generator, test data generator, mock data, European test data, WASM, checksum validation, free IBAN tool" />
     <meta name="author" content="Tony Benoy" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://tonybenoy.github.io/mockbanker/" />
 
     <!-- Open Graph -->
-    <meta property="og:title" content="MockBanker — IBAN & Personal ID Generator" />
-    <meta property="og:description" content="Generate valid test IBANs and personal ID codes for 96 countries — free, instant, runs in your browser." />
+    <meta property="og:title" content="MockBanker — Free IBAN & Personal ID Generator" />
+    <meta property="og:description" content="Generate valid, checksum-correct test IBANs and personal ID codes for 96 countries. Free, instant, runs in your browser. No signup required." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://tonybenoy.github.io/mockbanker/" />
+    <meta property="og:site_name" content="MockBanker" />
+    <meta property="og:locale" content="en_US" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="MockBanker — IBAN & Personal ID Generator" />
-    <meta name="twitter:description" content="Generate valid test IBANs and personal ID codes for 96 countries — free, instant, runs in your browser." />
+    <meta name="twitter:title" content="MockBanker — Free IBAN & Personal ID Generator" />
+    <meta name="twitter:description" content="Generate valid, checksum-correct test IBANs and personal ID codes for 96 countries. Free, instant, runs in your browser." />
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "MockBanker",
+        "url": "https://tonybenoy.github.io/mockbanker/",
+        "description": "Generate valid, checksum-correct test IBANs and personal ID codes for 96 countries. Runs entirely in the browser via WebAssembly.",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Any",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "author": {
+            "@type": "Person",
+            "name": "Tony Benoy",
+            "url": "https://github.com/tonybenoy"
+        },
+        "isAccessibleForFree": true,
+        "browserRequirements": "Requires WebAssembly support"
+    }
+    </script>
 
     <link data-trunk rel="css" href="style.css" />
 </head>
-<body></body>
+<body>
+    <noscript>
+        <p style="text-align:center;padding:2rem;font-family:sans-serif;">
+            MockBanker requires JavaScript and WebAssembly to run. Please enable JavaScript in your browser.
+        </p>
+    </noscript>
+</body>
 </html>

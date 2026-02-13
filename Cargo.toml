@@ -13,7 +13,5 @@ categories = ["wasm", "web-programming", "development-tools::testing"]
 leptos = { version = "0.7", features = ["csr"] }
 rand = "0.8"
 getrandom = { version = "0.2", features = ["js"] }
-web-sys = { version = "0.3", features = ["Navigator", "Clipboard", "Window"] }
 wasm-bindgen = "0.2"
-wasm-bindgen-futures = "0.4"
 eu-test-data-generator = { git = "https://github.com/Sunyata-OU/EU-Test-Data-Generator.git", default-features = false }

@@ -1,3 +1,4 @@
+/* Dark theme (default) */
 :root {
     --bg: #0f1117;
     --surface: #1a1d27;
@@ -12,6 +13,39 @@
     --radius: 8px;
     --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     --mono: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
+    color-scheme: dark;
+}
+
+/* Light theme */
+[data-theme="light"] {
+    --bg: #f8f9fb;
+    --surface: #ffffff;
+    --surface-hover: #f0f1f4;
+    --border: #d8dbe3;
+    --text: #1a1d27;
+    --text-muted: #6b7084;
+    --accent: #4a6cf7;
+    --accent-hover: #3a5ce6;
+    --success: #16a34a;
+    --error: #dc2626;
+    color-scheme: light;
+}
+
+/* Auto-detect system preference */
+@media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+        --bg: #f8f9fb;
+        --surface: #ffffff;
+        --surface-hover: #f0f1f4;
+        --border: #d8dbe3;
+        --text: #1a1d27;
+        --text-muted: #6b7084;
+        --accent: #4a6cf7;
+        --accent-hover: #3a5ce6;
+        --success: #16a34a;
+        --error: #dc2626;
+        color-scheme: light;
+    }
 }
 
 * {
@@ -26,6 +60,7 @@ body {
     color: var(--text);
     line-height: 1.6;
     min-height: 100vh;
+    transition: background 0.2s, color 0.2s;
 }
 
 .app {
@@ -37,6 +72,7 @@ body {
 header {
     text-align: center;
     margin-bottom: 2rem;
+    position: relative;
 }
 
 header h1 {
@@ -49,6 +85,30 @@ header h1 {
 header p {
     color: var(--text-muted);
     font-size: 0.9rem;
+}
+
+/* Theme toggle */
+.theme-toggle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    transition: background 0.15s, border-color 0.15s;
+    padding: 0;
+}
+
+.theme-toggle:hover {
+    border-color: var(--accent);
 }
 
 /* Tabs */
@@ -114,7 +174,7 @@ select, input[type="number"], input[type="text"] {
     font-family: var(--font);
     font-size: 0.9rem;
     outline: none;
-    transition: border-color 0.15s;
+    transition: border-color 0.15s, background 0.2s;
 }
 
 select:focus, input:focus {
