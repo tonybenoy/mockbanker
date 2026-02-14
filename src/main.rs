@@ -1,8 +1,185 @@
 use leptos::prelude::*;
+use leptos::task::spawn_local;
 use rand::thread_rng;
+use wasm_bindgen::JsCast;
 use wasm_bindgen::prelude::*;
 
 use idsmith::{bank_account, company_id, credit_card, iban, personal_id, swift};
+
+#[wasm_bindgen(inline_js = r#"
+export function copy_text(text) {
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).catch(() => {});
+    }
+}
+
+export function toggle_theme() {
+    const root = document.documentElement;
+    const current = root.getAttribute("data-theme");
+    let next;
+    if (current === "light") {
+        next = "dark";
+    } else if (current === "dark") {
+        next = "light";
+    } else {
+        next = window.matchMedia("(prefers-color-scheme: light)").matches ? "dark" : "light";
+    }
+    root.setAttribute("data-theme", next);
+    localStorage.setItem("theme", next);
+    return next === "light";
+}
+
+export function init_theme() {
+    const saved = localStorage.getItem("theme");
+    if (saved) {
+        document.documentElement.setAttribute("data-theme", saved);
+        return saved === "light";
+    }
+    return window.matchMedia("(prefers-color-scheme: light)").matches;
+}
+
+export function download_file(filename, content, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+export function check_online(callback) {
+    window.addEventListener('online', () => callback(true));
+    window.addEventListener('offline', () => callback(false));
+    return navigator.onLine;
+}
+
+export function register_pwa_install(callback) {
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        window.deferredPrompt = e;
+        callback(true);
+    });
+}
+
+export async function trigger_pwa_install() {
+    const promptEvent = window.deferredPrompt;
+    if (!promptEvent) return;
+    promptEvent.prompt();
+    const { outcome } = await promptEvent.userChoice;
+    window.deferredPrompt = null;
+    return outcome === 'accepted';
+}
+"#)]
+extern "C" {
+    fn copy_text(text: &str);
+    fn toggle_theme() -> bool;
+    fn init_theme() -> bool;
+    fn download_file(filename: &str, content: &str, mimeType: &str);
+    fn check_online(callback: js_sys::Function) -> bool;
+    fn register_pwa_install(callback: js_sys::Function);
+    fn trigger_pwa_install() -> js_sys::Promise;
+}
+
+fn copy_to_clipboard(text: &str) {
+    copy_text(text);
+}
+
+fn download_csv(filename: &str, content: &str) {
+    download_file(filename, content, "text/csv;charset=utf-8;");
+}
+
+fn country_name(code: &str) -> &'static str {
+    match code {
+        "AD" => "Andorra",
+        "AE" => "United Arab Emirates",
+        "AL" => "Albania",
+        "AT" => "Austria",
+        "AZ" => "Azerbaijan",
+        "BA" => "Bosnia and Herzegovina",
+        "BE" => "Belgium",
+        "BG" => "Bulgaria",
+        "BH" => "Bahrain",
+        "BI" => "Burundi",
+        "BR" => "Brazil",
+        "BY" => "Belarus",
+        "CH" => "Switzerland",
+        "CR" => "Costa Rica",
+        "CY" => "Cyprus",
+        "CZ" => "Czech Republic",
+        "DE" => "Germany",
+        "DJ" => "Djibouti",
+        "DK" => "Denmark",
+        "DO" => "Dominican Republic",
+        "EE" => "Estonia",
+        "EG" => "Egypt",
+        "ES" => "Spain",
+        "FI" => "Finland",
+        "FK" => "Falkland Islands",
+        "FO" => "Faroe Islands",
+        "FR" => "France",
+        "GB" => "United Kingdom",
+        "GE" => "Georgia",
+        "GI" => "Gibraltar",
+        "GL" => "Greenland",
+        "GR" => "Greece",
+        "GT" => "Guatemala",
+        "HR" => "Croatia",
+        "HU" => "Hungary",
+        "IE" => "Ireland",
+        "IL" => "Israel",
+        "IQ" => "Iraq",
+        "IS" => "Iceland",
+        "IT" => "Italy",
+        "JO" => "Jordan",
+        "KW" => "Kuwait",
+        "KZ" => "Kazakhstan",
+        "LB" => "Lebanon",
+        "LC" => "Saint Lucia",
+        "LI" => "Liechtenstein",
+        "LT" => "Lithuania",
+        "LU" => "Luxembourg",
+        "LV" => "Latvia",
+        "LY" => "Libya",
+        "MC" => "Monaco",
+        "MD" => "Moldova",
+        "ME" => "Montenegro",
+        "MK" => "North Macedonia",
+        "MN" => "Mongolia",
+        "MR" => "Mauritania",
+        "MT" => "Malta",
+        "MU" => "Mauritius",
+        "NI" => "Nicaragua",
+        "NL" => "Netherlands",
+        "NO" => "Norway",
+        "PK" => "Pakistan",
+        "PL" => "Poland",
+        "PS" => "Palestine",
+        "PT" => "Portugal",
+        "QA" => "Qatar",
+        "RO" => "Romania",
+        "RS" => "Serbia",
+        "RU" => "Russia",
+        "SA" => "Saudi Arabia",
+        "SC" => "Seychelles",
+        "SD" => "Sudan",
+        "SE" => "Sweden",
+        "SI" => "Slovenia",
+        "SK" => "Slovakia",
+        "SM" => "San Marino",
+        "SO" => "Somalia",
+        "ST" => "S\u{00e3}o Tom\u{00e9} and Pr\u{00ed}ncipe",
+        "SV" => "El Salvador",
+        "TL" => "Timor-Leste",
+        "TN" => "Tunisia",
+        "TR" => "Turkey",
+        "UA" => "Ukraine",
+        "VA" => "Vatican City",
+        "VG" => "British Virgin Islands",
+        "XK" => "Kosovo",
+        _ => "Unknown",
+    }
+}
 
 fn main() {
     leptos::mount::mount_to_body(App);
@@ -72,30 +249,30 @@ fn Tooltip(text: String) -> impl IntoView {
         </div>
     }
 }
-    id: String,
-    timestamp: u64,
-    category: String,
-    country: String,
-    count: u32,
-    results: Vec<String>,
-}
 
 #[component]
 fn App() -> impl IntoView {
     let active_tab = RwSignal::new("iban");
     let is_light = RwSignal::new(init_theme());
-    let is_online = RwSignal::new(check_online(Closure::wrap(Box::new(move |online: bool| {
+
+    let is_online = RwSignal::new(true);
+    let online_cb = Closure::wrap(Box::new(move |online: bool| {
         is_online.set(online);
-    }) as Box<dyn FnMut(bool)>).into_js_value()));
-    
+    }) as Box<dyn FnMut(bool)>);
+    is_online.set(check_online(online_cb.into_js_value().unchecked_into()));
+
     let can_install = RwSignal::new(false);
-    register_pwa_install(Closure::wrap(Box::new(move |can: bool| {
+    let install_cb = Closure::wrap(Box::new(move |can: bool| {
         can_install.set(can);
-    }) as Box<dyn FnMut(bool)>).into_js_value());
+    }) as Box<dyn FnMut(bool)>);
+    register_pwa_install(install_cb.into_js_value().unchecked_into());
 
     let install_app = move |_| {
         spawn_local(async move {
-            if trigger_pwa_install().await.is_ok() {
+            let res = wasm_bindgen_futures::JsFuture::from(trigger_pwa_install()).await;
+            if let Ok(val) = res
+                && val.as_bool().unwrap_or(false)
+            {
                 can_install.set(false);
             }
         });
@@ -279,10 +456,10 @@ fn HistoryTab() -> impl IntoView {
             <div class="history-list">
                 {move || history.get().into_iter().map(|item| {
                     let date = js_sys::Date::new(&js_sys::Number::from(item.timestamp as f64));
-                    let date_str = format!("{}/{}/{} {}:{:02}", 
+                    let date_str = format!("{}/{}/{} {}:{:02}",
                         date.get_date(), date.get_month() + 1, date.get_full_year(),
                         date.get_hours(), date.get_minutes());
-                    
+
                     view! {
                         <div class="history-item">
                             <div class="history-meta">
@@ -384,7 +561,8 @@ fn IbanTab() -> impl IntoView {
 
     let save_sql = move |_| {
         let rows = results.get();
-        let mut sql = String::from("CREATE TABLE IF NOT EXISTS ibans (iban TEXT, valid BOOLEAN);\n");
+        let mut sql =
+            String::from("CREATE TABLE IF NOT EXISTS ibans (iban TEXT, valid BOOLEAN);\n");
         for row in rows.iter() {
             sql.push_str(&format!(
                 "INSERT INTO ibans (iban, valid) VALUES ('{}', {});\n",
@@ -398,7 +576,7 @@ fn IbanTab() -> impl IntoView {
         <div class="controls">
             <div class="field">
                 <label>"Country"</label>
-                <SearchableSelect 
+                <SearchableSelect
                     options=countries_list
                     selected=country
                     on_change=Callback::new(|_| ())
@@ -502,10 +680,16 @@ fn PersonalIdTab() -> impl IntoView {
     let copied_idx: RwSignal<Option<usize>> = RwSignal::new(None);
 
     let registry = StoredValue::new(registry);
+    let id_countries_stored = StoredValue::new(id_countries.clone());
 
     let current_description = Memo::new(move |_| {
         let c = country.get();
-        id_countries.iter().find(|(code, _, _)| code == &c).map(|(_, _, d)| d.clone()).unwrap_or_default()
+        id_countries_stored.with_value(|list| {
+            list.iter()
+                .find(|(code, _, _)| code == &c)
+                .map(|(_, _, d)| d.clone())
+                .unwrap_or_default()
+        })
     });
 
     let generate = move |_| {
@@ -527,16 +711,16 @@ fn PersonalIdTab() -> impl IntoView {
         let mut history_results = Vec::new();
         registry.with_value(|reg| {
             for _ in 0..n {
-                if let Some(code) = reg.generate(&c, &opts, &mut rng) {
-                    if let Some(parsed) = reg.parse(&c, &code) {
-                        rows.push(IdRow {
-                            code: parsed.code.clone(),
-                            gender: parsed.gender.unwrap_or_default(),
-                            dob: parsed.dob.unwrap_or_default(),
-                            valid: parsed.valid,
-                        });
-                        history_results.push(parsed.code);
-                    }
+                if let Some(code) = reg.generate(&c, &opts, &mut rng)
+                    && let Some(parsed) = reg.parse(&c, &code)
+                {
+                    rows.push(IdRow {
+                        code: parsed.code.clone(),
+                        gender: parsed.gender.unwrap_or_default(),
+                        dob: parsed.dob.unwrap_or_default(),
+                        valid: parsed.valid,
+                    });
+                    history_results.push(parsed.code);
                 }
             }
         });
@@ -573,12 +757,18 @@ fn PersonalIdTab() -> impl IntoView {
     let save_json = move |_| {
         let rows = results.get();
         let json = serde_json::to_string_pretty(&rows).unwrap_or_default();
-        download_file("personal_ids.json", &json, "application/json;charset=utf-8;");
+        download_file(
+            "personal_ids.json",
+            &json,
+            "application/json;charset=utf-8;",
+        );
     };
 
     let save_sql = move |_| {
         let rows = results.get();
-        let mut sql = String::from("CREATE TABLE IF NOT EXISTS personal_ids (code TEXT, gender TEXT, dob TEXT, valid BOOLEAN);\n");
+        let mut sql = String::from(
+            "CREATE TABLE IF NOT EXISTS personal_ids (code TEXT, gender TEXT, dob TEXT, valid BOOLEAN);\n",
+        );
         for row in rows.iter() {
             sql.push_str(&format!(
                 "INSERT INTO personal_ids (code, gender, dob, valid) VALUES ('{}', '{}', '{}', {});\n",
@@ -588,7 +778,8 @@ fn PersonalIdTab() -> impl IntoView {
         download_file("personal_ids.sql", &sql, "text/plain;charset=utf-8;");
     };
 
-    let countries_for_select: Vec<(String, String)> = id_countries.clone()
+    let countries_for_select: Vec<(String, String)> = id_countries
+        .clone()
         .into_iter()
         .map(|(c, n, _)| (c, n))
         .collect();
@@ -600,7 +791,7 @@ fn PersonalIdTab() -> impl IntoView {
                     "Country "
                     <Tooltip text=current_description.get() />
                 </label>
-                <SearchableSelect 
+                <SearchableSelect
                     options=countries_for_select
                     selected=country
                     on_change=Callback::new(|_| ())
@@ -773,7 +964,8 @@ fn BankAccountTab() -> impl IntoView {
         download_csv("bank_accounts.csv", &csv);
     };
 
-    let countries_for_select: Vec<(String, String)> = countries.clone()
+    let countries_for_select: Vec<(String, String)> = countries
+        .clone()
         .into_iter()
         .map(|(c, n, _, _)| (c, n))
         .collect();
@@ -782,7 +974,7 @@ fn BankAccountTab() -> impl IntoView {
         <div class="controls">
             <div class="field">
                 <label>"Country"</label>
-                <SearchableSelect 
+                <SearchableSelect
                     options=countries_for_select
                     selected=country
                     on_change=Callback::new(|_| ())
@@ -884,7 +1076,9 @@ fn CreditCardTab() -> impl IntoView {
         let mut rows = Vec::new();
         registry.with_value(|reg| {
             for _ in 0..n {
-                let opts = credit_card::GenOptions { brand: Some(b.clone()) };
+                let opts = credit_card::GenOptions {
+                    brand: Some(b.clone()),
+                };
                 if let Some(res) = reg.generate(&opts, &mut rng) {
                     rows.push(CreditCardRow {
                         number: res.number,
@@ -1037,7 +1231,9 @@ fn SwiftTab() -> impl IntoView {
         let mut rows = Vec::new();
         registry.with_value(|reg| {
             for _ in 0..n {
-                let opts = swift::GenOptions { country: Some(c.clone()) };
+                let opts = swift::GenOptions {
+                    country: Some(c.clone()),
+                };
                 let res = reg.generate(&opts, &mut rng);
                 rows.push(SwiftRow {
                     code: res.code,
@@ -1078,7 +1274,8 @@ fn SwiftTab() -> impl IntoView {
         download_csv("swift_codes.csv", &csv);
     };
 
-    let countries_for_select: Vec<(String, String)> = countries.clone()
+    let countries_for_select: Vec<(String, String)> = countries
+        .clone()
         .into_iter()
         .map(|code| (code.clone(), country_name(&code).to_string()))
         .collect();
@@ -1087,7 +1284,7 @@ fn SwiftTab() -> impl IntoView {
         <div class="controls">
             <div class="field">
                 <label>"Country"</label>
-                <SearchableSelect 
+                <SearchableSelect
                     options=countries_for_select
                     selected=country
                     on_change=Callback::new(|_| ())
@@ -1195,7 +1392,9 @@ fn CompanyIdTab() -> impl IntoView {
         let mut rows = Vec::new();
         registry.with_value(|reg| {
             for _ in 0..n {
-                let opts = company_id::GenOptions { country: Some(c.clone()) };
+                let opts = company_id::GenOptions {
+                    country: Some(c.clone()),
+                };
                 if let Some(res) = reg.generate(&opts, &mut rng) {
                     rows.push(CompanyIdRow {
                         code: res.code,
@@ -1233,7 +1432,8 @@ fn CompanyIdTab() -> impl IntoView {
         download_csv("company_ids.csv", &csv);
     };
 
-    let countries_for_select: Vec<(String, String)> = countries.clone()
+    let countries_for_select: Vec<(String, String)> = countries
+        .clone()
         .into_iter()
         .map(|(c, n, _)| (c, n))
         .collect();
@@ -1242,7 +1442,7 @@ fn CompanyIdTab() -> impl IntoView {
         <div class="controls">
             <div class="field">
                 <label>"Country"</label>
-                <SearchableSelect 
+                <SearchableSelect
                     options=countries_for_select
                     selected=country
                     on_change=Callback::new(|_| ())
@@ -1330,7 +1530,7 @@ fn SearchableSelect(
     let search_text = RwSignal::new(String::new());
     let is_open = RwSignal::new(false);
     let options = StoredValue::new(options);
-    
+
     let filtered_options = Memo::new(move |_| {
         let query = search_text.get().to_lowercase();
         options.with_value(|opts| {
@@ -1373,7 +1573,7 @@ fn SearchableSelect(
                 }
                 on:focus=move |_| is_open.set(true)
             />
-            
+
             <Show when=move || is_open.get()>
                 <div class="dropdown-results">
                     {move || {
@@ -1385,7 +1585,7 @@ fn SearchableSelect(
                                 let code_c = code.clone();
                                 let is_selected = selected.get() == code;
                                 view! {
-                                    <div 
+                                    <div
                                         class=format!("dropdown-item {}", if is_selected { "selected" } else { "" })
                                         on:click=move |_| {
                                             selected.set(code_c.clone());
@@ -1430,13 +1630,13 @@ fn ValidatorTab() -> impl IntoView {
         .iter()
         .map(|(c, n, _, _)| (c.to_string(), n.to_string()))
         .collect();
-    
+
     let company_countries: Vec<(String, String)> = company_registry
         .list_countries()
         .iter()
         .map(|(c, n, _)| (c.to_string(), n.to_string()))
         .collect();
-    
+
     let id_countries = StoredValue::new(id_countries);
     let bank_countries = StoredValue::new(bank_countries);
     let company_countries = StoredValue::new(company_countries);
@@ -1457,15 +1657,30 @@ fn ValidatorTab() -> impl IntoView {
         match selected_type.get().as_str() {
             "iban" => {
                 let is_valid = iban::validate_iban(&val);
-                result.set(Some((is_valid, if is_valid { "Valid IBAN".to_string() } else { "Invalid IBAN checksum or format".to_string() })));
+                result.set(Some((
+                    is_valid,
+                    if is_valid {
+                        "Valid IBAN".to_string()
+                    } else {
+                        "Invalid IBAN checksum or format".to_string()
+                    },
+                )));
             }
             "id" => {
                 id_registry.with_value(|reg| {
                     if let Some(parsed) = reg.parse(&country.get(), &val) {
                         if parsed.valid {
-                            result.set(Some((true, format!("Valid ID ({} / {})", parsed.gender.unwrap_or_default(), parsed.dob.unwrap_or_default()))));
+                            result.set(Some((
+                                true,
+                                format!(
+                                    "Valid ID ({} / {})",
+                                    parsed.gender.unwrap_or_default(),
+                                    parsed.dob.unwrap_or_default()
+                                ),
+                            )));
                         } else {
-                            result.set(Some((false, "Invalid ID for selected country".to_string())));
+                            result
+                                .set(Some((false, "Invalid ID for selected country".to_string())));
                         }
                     } else {
                         result.set(Some((false, "Could not parse ID".to_string())));
@@ -1473,30 +1688,58 @@ fn ValidatorTab() -> impl IntoView {
                 });
             }
             "bank" => {
-                bank_registry.with_value(|reg| {
-                    match reg.validate(&country.get(), &val) {
-                        Some(true) => result.set(Some((true, "Valid Bank Account for selected country".to_string()))),
-                        Some(false) => result.set(Some((false, "Invalid Bank Account checksum or format".to_string()))),
-                        None => result.set(Some((false, "Unsupported country for Bank Account validation".to_string()))),
-                    }
+                bank_registry.with_value(|reg| match reg.validate(&country.get(), &val) {
+                    Some(true) => result.set(Some((
+                        true,
+                        "Valid Bank Account for selected country".to_string(),
+                    ))),
+                    Some(false) => result.set(Some((
+                        false,
+                        "Invalid Bank Account checksum or format".to_string(),
+                    ))),
+                    None => result.set(Some((
+                        false,
+                        "Unsupported country for Bank Account validation".to_string(),
+                    ))),
                 });
             }
             "card" => {
                 card_registry.with_value(|reg| {
                     let is_valid = reg.validate(&val);
-                    result.set(Some((is_valid, if is_valid { "Valid Credit Card (Luhn check passed)".to_string() } else { "Invalid Credit Card (Luhn check failed)".to_string() })));
+                    result.set(Some((
+                        is_valid,
+                        if is_valid {
+                            "Valid Credit Card (Luhn check passed)".to_string()
+                        } else {
+                            "Invalid Credit Card (Luhn check failed)".to_string()
+                        },
+                    )));
                 });
             }
             "swift" => {
                 swift_registry.with_value(|reg| {
                     let is_valid = reg.validate(&val);
-                    result.set(Some((is_valid, if is_valid { "Valid SWIFT/BIC format".to_string() } else { "Invalid SWIFT/BIC format".to_string() })));
+                    result.set(Some((
+                        is_valid,
+                        if is_valid {
+                            "Valid SWIFT/BIC format".to_string()
+                        } else {
+                            "Invalid SWIFT/BIC format".to_string()
+                        },
+                    )));
                 });
             }
             "company" => {
                 company_registry.with_value(|reg| {
                     let is_valid = reg.validate(&country.get(), &val);
-                    result.set(Some((is_valid, if is_valid { "Valid Company ID for selected country".to_string() } else { "Invalid Company ID checksum or format".to_string() })));
+                    result.set(Some((
+                        is_valid,
+                        if is_valid {
+                            "Valid Company ID for selected country".to_string()
+                        } else {
+                            "Invalid Company ID checksum or format".to_string()
+                        },
+                    )));
                 });
             }
             _ => {}
@@ -1539,10 +1782,10 @@ fn ValidatorTab() -> impl IntoView {
                                 _ => Vec::new(),
                             };
                             view! {
-                                <SearchableSelect 
-                                    options=list 
-                                    selected=country 
-                                    on_change=Callback::new(move |_| result.set(None)) 
+                                <SearchableSelect
+                                    options=list
+                                    selected=country
+                                    on_change=Callback::new(move |_| result.set(None))
                                 />
                             }
                         }}
@@ -1551,7 +1794,7 @@ fn ValidatorTab() -> impl IntoView {
 
                 <div class="field" style="flex: 1">
                     <label>"Value to validate"</label>
-                    <input type="text" 
+                    <input type="text"
                         placeholder="Enter code here..."
                         prop:value=move || input_value.get()
                         on:input=move |ev| input_value.set(event_target_value(&ev))
