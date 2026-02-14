@@ -8,14 +8,14 @@ fn main() {
     leptos::mount::mount_to_body(App);
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 struct IbanRow {
     raw: String,
     formatted: String,
     valid: bool,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 struct IdRow {
     code: String,
     gender: String,
@@ -23,21 +23,21 @@ struct IdRow {
     valid: bool,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 struct BankAccountRow {
     account: String,
     routing: String,
     valid: bool,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 struct CreditCardRow {
     number: String,
     brand: String,
     valid: bool,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 struct SwiftRow {
     code: String,
     bank: String,
@@ -46,167 +46,75 @@ struct SwiftRow {
     valid: bool,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 struct CompanyIdRow {
     code: String,
     name: String,
     valid: bool,
 }
 
-#[wasm_bindgen(inline_js = r#"
-export function copy_text(text) {
-    if (navigator.clipboard) {
-        navigator.clipboard.writeText(text).catch(() => {});
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+struct HistoryItem {
+    id: String,
+    timestamp: u64,
+    category: String,
+    country: String,
+    count: u32,
+    results: Vec<String>,
+}
+
+#[component]
+fn Tooltip(text: String) -> impl IntoView {
+    view! {
+        <div class="tooltip-container">
+            <span class="tooltip-icon">"?"</span>
+            <div class="tooltip-content">{text}</div>
+        </div>
     }
 }
-
-export function toggle_theme() {
-    const root = document.documentElement;
-    const current = root.getAttribute("data-theme");
-    let next;
-    if (current === "light") {
-        next = "dark";
-    } else if (current === "dark") {
-        next = "light";
-    } else {
-        next = window.matchMedia("(prefers-color-scheme: light)").matches ? "dark" : "light";
-    }
-    root.setAttribute("data-theme", next);
-    localStorage.setItem("theme", next);
-    return next === "light";
-}
-
-export function init_theme() {
-    const saved = localStorage.getItem("theme");
-    if (saved) {
-        document.documentElement.setAttribute("data-theme", saved);
-        return saved === "light";
-    }
-    return window.matchMedia("(prefers-color-scheme: light)").matches;
-}
-
-export function download_csv(filename, content) {
-    const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
-}
-"#)]
-extern "C" {
-    fn copy_text(text: &str);
-    fn toggle_theme() -> bool;
-    fn init_theme() -> bool;
-    fn download_csv(filename: &str, content: &str);
-}
-
-fn copy_to_clipboard(text: &str) {
-    copy_text(text);
-}
-
-fn country_name(code: &str) -> &'static str {
-    match code {
-        "AD" => "Andorra",
-        "AE" => "United Arab Emirates",
-        "AL" => "Albania",
-        "AT" => "Austria",
-        "AZ" => "Azerbaijan",
-        "BA" => "Bosnia and Herzegovina",
-        "BE" => "Belgium",
-        "BG" => "Bulgaria",
-        "BH" => "Bahrain",
-        "BI" => "Burundi",
-        "BR" => "Brazil",
-        "BY" => "Belarus",
-        "CH" => "Switzerland",
-        "CR" => "Costa Rica",
-        "CY" => "Cyprus",
-        "CZ" => "Czech Republic",
-        "DE" => "Germany",
-        "DJ" => "Djibouti",
-        "DK" => "Denmark",
-        "DO" => "Dominican Republic",
-        "EE" => "Estonia",
-        "EG" => "Egypt",
-        "ES" => "Spain",
-        "FI" => "Finland",
-        "FK" => "Falkland Islands",
-        "FO" => "Faroe Islands",
-        "FR" => "France",
-        "GB" => "United Kingdom",
-        "GE" => "Georgia",
-        "GI" => "Gibraltar",
-        "GL" => "Greenland",
-        "GR" => "Greece",
-        "GT" => "Guatemala",
-        "HR" => "Croatia",
-        "HU" => "Hungary",
-        "IE" => "Ireland",
-        "IL" => "Israel",
-        "IQ" => "Iraq",
-        "IS" => "Iceland",
-        "IT" => "Italy",
-        "JO" => "Jordan",
-        "KW" => "Kuwait",
-        "KZ" => "Kazakhstan",
-        "LB" => "Lebanon",
-        "LC" => "Saint Lucia",
-        "LI" => "Liechtenstein",
-        "LT" => "Lithuania",
-        "LU" => "Luxembourg",
-        "LV" => "Latvia",
-        "LY" => "Libya",
-        "MC" => "Monaco",
-        "MD" => "Moldova",
-        "ME" => "Montenegro",
-        "MK" => "North Macedonia",
-        "MN" => "Mongolia",
-        "MR" => "Mauritania",
-        "MT" => "Malta",
-        "MU" => "Mauritius",
-        "NI" => "Nicaragua",
-        "NL" => "Netherlands",
-        "NO" => "Norway",
-        "PK" => "Pakistan",
-        "PL" => "Poland",
-        "PS" => "Palestine",
-        "PT" => "Portugal",
-        "QA" => "Qatar",
-        "RO" => "Romania",
-        "RS" => "Serbia",
-        "RU" => "Russia",
-        "SA" => "Saudi Arabia",
-        "SC" => "Seychelles",
-        "SD" => "Sudan",
-        "SE" => "Sweden",
-        "SI" => "Slovenia",
-        "SK" => "Slovakia",
-        "SM" => "San Marino",
-        "SO" => "Somalia",
-        "ST" => "S\u{00e3}o Tom\u{00e9} and Pr\u{00ed}ncipe",
-        "SV" => "El Salvador",
-        "TL" => "Timor-Leste",
-        "TN" => "Tunisia",
-        "TR" => "Turkey",
-        "UA" => "Ukraine",
-        "VA" => "Vatican City",
-        "VG" => "British Virgin Islands",
-        "XK" => "Kosovo",
-        _ => "Unknown",
-    }
+    id: String,
+    timestamp: u64,
+    category: String,
+    country: String,
+    count: u32,
+    results: Vec<String>,
 }
 
 #[component]
 fn App() -> impl IntoView {
     let active_tab = RwSignal::new("iban");
     let is_light = RwSignal::new(init_theme());
+    let is_online = RwSignal::new(check_online(Closure::wrap(Box::new(move |online: bool| {
+        is_online.set(online);
+    }) as Box<dyn FnMut(bool)>).into_js_value()));
+    
+    let can_install = RwSignal::new(false);
+    register_pwa_install(Closure::wrap(Box::new(move |can: bool| {
+        can_install.set(can);
+    }) as Box<dyn FnMut(bool)>).into_js_value());
+
+    let install_app = move |_| {
+        spawn_local(async move {
+            if trigger_pwa_install().await.is_ok() {
+                can_install.set(false);
+            }
+        });
+    };
 
     view! {
         <div class="app">
             <header>
-                <h1>"MockBanker"</h1>
+                <div class="header-main">
+                    <h1>"MockBanker"</h1>
+                    <div class="header-badges">
+                        <Show when=move || !is_online.get()>
+                            <span class="badge badge-offline">"Offline"</span>
+                        </Show>
+                        <Show when=move || can_install.get()>
+                            <button class="btn-install" on:click=install_app>"Install App"</button>
+                        </Show>
+                    </div>
+                </div>
                 <p>"Generate valid, checksum-correct test data \u{2014} runs entirely in your browser"</p>
                 <button
                     class="theme-toggle"
@@ -260,6 +168,12 @@ fn App() -> impl IntoView {
                 >
                     "Validator"
                 </button>
+                <button
+                    class=move || if active_tab.get() == "history" { "tab active" } else { "tab" }
+                    on:click=move |_| active_tab.set("history")
+                >
+                    "History"
+                </button>
             </div>
 
             <Show when=move || active_tab.get() == "iban">
@@ -283,17 +197,107 @@ fn App() -> impl IntoView {
             <Show when=move || active_tab.get() == "validator">
                 <ValidatorTab />
             </Show>
+            <Show when=move || active_tab.get() == "history">
+                <HistoryTab />
+            </Show>
 
             <footer>
                 <p>
                     "Made with \u{2764} by "
                     <a href="https://github.com/tonybenoy" target="_blank">"Tony Benoy"</a>
-                    " & "
+                    ", "
                     <a href="https://claude.ai" target="_blank">"Claude"</a>
+                    " & "
+                    <a href="https://gemini.google.com" target="_blank">"Gemini"</a>
                     " \u{00b7} Powered by "
                     <a href="https://github.com/Sunyata-OU/idsmith" target="_blank">"idsmith"</a>
                 </p>
             </footer>
+        </div>
+    }
+}
+
+fn add_to_history(category: &str, country: &str, count: u32, results: Vec<String>) {
+    let window = web_sys::window().unwrap();
+    let storage = window.local_storage().unwrap().unwrap();
+    let mut history: Vec<HistoryItem> = storage
+        .get_item("history")
+        .unwrap()
+        .and_then(|s| serde_json::from_str(&s).ok())
+        .unwrap_or_default();
+
+    let item = HistoryItem {
+        id: rand::random::<u64>().to_string(),
+        timestamp: js_sys::Date::now() as u64,
+        category: category.to_string(),
+        country: country.to_string(),
+        count,
+        results,
+    };
+
+    history.insert(0, item);
+    if history.len() > 50 {
+        history.truncate(50);
+    }
+
+    if let Ok(json) = serde_json::to_string(&history) {
+        let _ = storage.set_item("history", &json);
+    }
+}
+
+#[component]
+fn HistoryTab() -> impl IntoView {
+    let get_history = || {
+        let window = web_sys::window().unwrap();
+        let storage = window.local_storage().unwrap().unwrap();
+        storage
+            .get_item("history")
+            .unwrap()
+            .and_then(|s| serde_json::from_str::<Vec<HistoryItem>>(&s).ok())
+            .unwrap_or_default()
+    };
+
+    let history = RwSignal::new(get_history());
+
+    let clear_history = move |_| {
+        let window = web_sys::window().unwrap();
+        let storage = window.local_storage().unwrap().unwrap();
+        let _ = storage.remove_item("history");
+        history.set(Vec::new());
+    };
+
+    view! {
+        <div class="history-tab">
+            <div class="controls">
+                <button class="btn btn-secondary" on:click=clear_history>"Clear History"</button>
+            </div>
+
+            <Show when=move || history.get().is_empty()>
+                <div class="empty">"No history yet. Generate some data to see it here!"</div>
+            </Show>
+
+            <div class="history-list">
+                {move || history.get().into_iter().map(|item| {
+                    let date = js_sys::Date::new(&js_sys::Number::from(item.timestamp as f64));
+                    let date_str = format!("{}/{}/{} {}:{:02}", 
+                        date.get_date(), date.get_month() + 1, date.get_full_year(),
+                        date.get_hours(), date.get_minutes());
+                    
+                    view! {
+                        <div class="history-item">
+                            <div class="history-meta">
+                                <span class="history-category">{item.category}</span>
+                                <span class="history-country">{item.country}</span>
+                                <span class="history-count">{item.count} " items"</span>
+                                <span class="history-date">{date_str}</span>
+                            </div>
+                            <div class="history-results">
+                                {item.results.join(", ")}
+                            </div>
+                        </div>
+                    }
+                }).collect_view()}
+            </div>
         </div>
     }
 }
@@ -323,18 +327,21 @@ fn IbanTab() -> impl IntoView {
             Some(c.as_str())
         };
         let mut rows = Vec::new();
+        let mut history_results = Vec::new();
         for _ in 0..n {
             if let Ok(code) = iban::generate_iban(c_opt, &mut rng) {
                 let valid = iban::validate_iban(&code);
                 rows.push(IbanRow {
                     formatted: iban::format_iban(&code),
-                    raw: code,
+                    raw: code.clone(),
                     valid,
                 });
+                history_results.push(code);
             }
         }
         results.set(rows);
         copied_idx.set(None);
+        add_to_history("IBAN", &c, n, history_results);
     };
 
     let copy_all = move |_| {
@@ -366,7 +373,25 @@ fn IbanTab() -> impl IntoView {
                 if row.valid { "Yes" } else { "No" }
             ));
         }
-        download_csv("ibans.csv", &csv);
+        download_file("ibans.csv", &csv, "text/csv;charset=utf-8;");
+    };
+
+    let save_json = move |_| {
+        let rows = results.get();
+        let json = serde_json::to_string_pretty(&rows).unwrap_or_default();
+        download_file("ibans.json", &json, "application/json;charset=utf-8;");
+    };
+
+    let save_sql = move |_| {
+        let rows = results.get();
+        let mut sql = String::from("CREATE TABLE IF NOT EXISTS ibans (iban TEXT, valid BOOLEAN);\n");
+        for row in rows.iter() {
+            sql.push_str(&format!(
+                "INSERT INTO ibans (iban, valid) VALUES ('{}', {});\n",
+                row.raw, row.valid
+            ));
+        }
+        download_file("ibans.sql", &sql, "text/plain;charset=utf-8;");
     };
 
     view! {
@@ -404,7 +429,9 @@ fn IbanTab() -> impl IntoView {
 
             <Show when=move || !results.get().is_empty()>
                 <button class="btn btn-secondary" on:click=copy_all>"Copy all"</button>
-                <button class="btn btn-secondary" on:click=save_csv>"Download CSV"</button>
+                <button class="btn btn-secondary" on:click=save_csv>"CSV"</button>
+                <button class="btn btn-secondary" on:click=save_json>"JSON"</button>
+                <button class="btn btn-secondary" on:click=save_sql>"SQL"</button>
             </Show>
         </div>
 
@@ -476,6 +503,11 @@ fn PersonalIdTab() -> impl IntoView {
 
     let registry = StoredValue::new(registry);
 
+    let current_description = Memo::new(move |_| {
+        let c = country.get();
+        id_countries.iter().find(|(code, _, _)| code == &c).map(|(_, _, d)| d.clone()).unwrap_or_default()
+    });
+
     let generate = move |_| {
         let mut rng = thread_rng();
         let c = country.get();
@@ -492,22 +524,25 @@ fn PersonalIdTab() -> impl IntoView {
             year: y,
         };
         let mut rows = Vec::new();
+        let mut history_results = Vec::new();
         registry.with_value(|reg| {
             for _ in 0..n {
                 if let Some(code) = reg.generate(&c, &opts, &mut rng) {
                     if let Some(parsed) = reg.parse(&c, &code) {
                         rows.push(IdRow {
-                            code: parsed.code,
+                            code: parsed.code.clone(),
                             gender: parsed.gender.unwrap_or_default(),
                             dob: parsed.dob.unwrap_or_default(),
                             valid: parsed.valid,
                         });
+                        history_results.push(parsed.code);
                     }
                 }
             }
         });
         results.set(rows);
         copied_idx.set(None);
+        add_to_history("Personal ID", &c, n, history_results);
     };
 
     let copy_all = move |_| {
@@ -532,7 +567,25 @@ fn PersonalIdTab() -> impl IntoView {
                 if row.valid { "Yes" } else { "No" }
             ));
         }
-        download_csv("personal_ids.csv", &csv);
+        download_file("personal_ids.csv", &csv, "text/csv;charset=utf-8;");
+    };
+
+    let save_json = move |_| {
+        let rows = results.get();
+        let json = serde_json::to_string_pretty(&rows).unwrap_or_default();
+        download_file("personal_ids.json", &json, "application/json;charset=utf-8;");
+    };
+
+    let save_sql = move |_| {
+        let rows = results.get();
+        let mut sql = String::from("CREATE TABLE IF NOT EXISTS personal_ids (code TEXT, gender TEXT, dob TEXT, valid BOOLEAN);\n");
+        for row in rows.iter() {
+            sql.push_str(&format!(
+                "INSERT INTO personal_ids (code, gender, dob, valid) VALUES ('{}', '{}', '{}', {});\n",
+                row.code, row.gender, row.dob, row.valid
+            ));
+        }
+        download_file("personal_ids.sql", &sql, "text/plain;charset=utf-8;");
     };
 
     let countries_for_select: Vec<(String, String)> = id_countries.clone()
@@ -543,7 +596,10 @@ fn PersonalIdTab() -> impl IntoView {
     view! {
         <div class="controls">
             <div class="field">
-                <label>"Country"</label>
+                <label>
+                    "Country "
+                    <Tooltip text=current_description.get() />
+                </label>
                 <SearchableSelect 
                     options=countries_for_select
                     selected=country
@@ -588,7 +644,9 @@ fn PersonalIdTab() -> impl IntoView {
 
             <Show when=move || !results.get().is_empty()>
                 <button class="btn btn-secondary" on:click=copy_all>"Copy all"</button>
-                <button class="btn btn-secondary" on:click=save_csv>"Download CSV"</button>
+                <button class="btn btn-secondary" on:click=save_csv>"CSV"</button>
+                <button class="btn btn-secondary" on:click=save_json>"JSON"</button>
+                <button class="btn btn-secondary" on:click=save_sql>"SQL"</button>
             </Show>
         </div>
 
