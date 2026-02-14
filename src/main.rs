@@ -76,6 +76,98 @@ fn copy_to_clipboard(text: &str) {
     copy_text(text);
 }
 
+fn country_name(code: &str) -> &'static str {
+    match code {
+        "AD" => "Andorra",
+        "AE" => "United Arab Emirates",
+        "AL" => "Albania",
+        "AT" => "Austria",
+        "AZ" => "Azerbaijan",
+        "BA" => "Bosnia and Herzegovina",
+        "BE" => "Belgium",
+        "BG" => "Bulgaria",
+        "BH" => "Bahrain",
+        "BI" => "Burundi",
+        "BR" => "Brazil",
+        "BY" => "Belarus",
+        "CH" => "Switzerland",
+        "CR" => "Costa Rica",
+        "CY" => "Cyprus",
+        "CZ" => "Czech Republic",
+        "DE" => "Germany",
+        "DJ" => "Djibouti",
+        "DK" => "Denmark",
+        "DO" => "Dominican Republic",
+        "EE" => "Estonia",
+        "EG" => "Egypt",
+        "ES" => "Spain",
+        "FI" => "Finland",
+        "FK" => "Falkland Islands",
+        "FO" => "Faroe Islands",
+        "FR" => "France",
+        "GB" => "United Kingdom",
+        "GE" => "Georgia",
+        "GI" => "Gibraltar",
+        "GL" => "Greenland",
+        "GR" => "Greece",
+        "GT" => "Guatemala",
+        "HR" => "Croatia",
+        "HU" => "Hungary",
+        "IE" => "Ireland",
+        "IL" => "Israel",
+        "IQ" => "Iraq",
+        "IS" => "Iceland",
+        "IT" => "Italy",
+        "JO" => "Jordan",
+        "KW" => "Kuwait",
+        "KZ" => "Kazakhstan",
+        "LB" => "Lebanon",
+        "LC" => "Saint Lucia",
+        "LI" => "Liechtenstein",
+        "LT" => "Lithuania",
+        "LU" => "Luxembourg",
+        "LV" => "Latvia",
+        "LY" => "Libya",
+        "MC" => "Monaco",
+        "MD" => "Moldova",
+        "ME" => "Montenegro",
+        "MK" => "North Macedonia",
+        "MN" => "Mongolia",
+        "MR" => "Mauritania",
+        "MT" => "Malta",
+        "MU" => "Mauritius",
+        "NI" => "Nicaragua",
+        "NL" => "Netherlands",
+        "NO" => "Norway",
+        "PK" => "Pakistan",
+        "PL" => "Poland",
+        "PS" => "Palestine",
+        "PT" => "Portugal",
+        "QA" => "Qatar",
+        "RO" => "Romania",
+        "RS" => "Serbia",
+        "RU" => "Russia",
+        "SA" => "Saudi Arabia",
+        "SC" => "Seychelles",
+        "SD" => "Sudan",
+        "SE" => "Sweden",
+        "SI" => "Slovenia",
+        "SK" => "Slovakia",
+        "SM" => "San Marino",
+        "SO" => "Somalia",
+        "ST" => "S\u{00e3}o Tom\u{00e9} and Pr\u{00ed}ncipe",
+        "SV" => "El Salvador",
+        "TL" => "Timor-Leste",
+        "TN" => "Tunisia",
+        "TR" => "Turkey",
+        "UA" => "Ukraine",
+        "VA" => "Vatican City",
+        "VG" => "British Virgin Islands",
+        "XK" => "Kosovo",
+        _ => "Unknown",
+    }
+}
+
 #[component]
 fn App() -> impl IntoView {
     let active_tab = RwSignal::new("iban");
@@ -132,7 +224,8 @@ fn App() -> impl IntoView {
 
 #[component]
 fn IbanTab() -> impl IntoView {
-    let countries = iban::supported_countries();
+    let mut countries: Vec<&str> = iban::supported_countries();
+    countries.sort_by_key(|c| country_name(c));
     let country = RwSignal::new("DE".to_string());
     let count = RwSignal::new(5u32);
     let spaces = RwSignal::new(true);
@@ -186,7 +279,11 @@ fn IbanTab() -> impl IntoView {
         let mut csv = String::from("IBAN,Valid\n");
         for row in rows.iter() {
             let display = if use_spaces { &row.formatted } else { &row.raw };
-            csv.push_str(&format!("{},{}\n", display, if row.valid { "Yes" } else { "No" }));
+            csv.push_str(&format!(
+                "{},{}\n",
+                display,
+                if row.valid { "Yes" } else { "No" }
+            ));
         }
         download_csv("ibans.csv", &csv);
     };
@@ -202,9 +299,10 @@ fn IbanTab() -> impl IntoView {
                     {countries.into_iter().map(|cc| {
                         let cc_owned = cc.to_string();
                         let cc2 = cc_owned.clone();
+                        let label = format!("{cc} \u{2014} {}", country_name(cc));
                         view! {
                             <option value={cc_owned} selected=move || country.get() == cc2>
-                                {cc}
+                                {label}
                             </option>
                         }
                     }).collect_view()}
