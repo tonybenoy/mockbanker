@@ -381,14 +381,26 @@ fn App() -> impl IntoView {
 
             <footer>
                 <p>
-                    "Made with \u{2764} by "
-                    <a href="https://github.com/tonybenoy" target="_blank">"Tony Benoy"</a>
-                    ", "
-                    <a href="https://claude.ai" target="_blank">"Claude"</a>
-                    " & "
-                    <a href="https://gemini.google.com" target="_blank">"Gemini"</a>
-                    " \u{00b7} Powered by "
+                    "Built with \u{2764} by "
+                    <a href="https://tonybenoy.com" target="_blank">"Tony Benoy"</a>
+                    " \u{00b7} "
+                    <a href="https://github.com/tonybenoy/mockbanker" target="_blank">"GitHub"</a>
+                    " \u{00b7} "
+                    <a href="https://github.com/tonybenoy/mockbanker/issues" target="_blank">"Contribute"</a>
+                </p>
+                <div class="share-links">
+                    <span>"Share: "</span>
+                    <a href="https://www.facebook.com/sharer/sharer.php?u=https://tonybenoy.github.io/mockbanker/" target="_blank">"Facebook"</a>
+                    <a href="https://twitter.com/intent/tweet?url=https://tonybenoy.github.io/mockbanker/&text=MockBanker%20%E2%80%94%20Free%20IBAN%20%26%20Personal%20ID%20Generator" target="_blank">"Twitter"</a>
+                    <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://tonybenoy.github.io/mockbanker/" target="_blank">"LinkedIn"</a>
+                </div>
+                <p style="margin-top: 0.5rem; opacity: 0.8;">
+                    "Powered by "
                     <a href="https://github.com/Sunyata-OU/idsmith" target="_blank">"idsmith"</a>
+                    " \u{00b7} Built with "
+                    <a href="https://gemini.google.com" target="_blank">"Gemini"</a>
+                    " & "
+                    <a href="https://claude.ai" target="_blank">"Claude"</a>
                 </p>
             </footer>
         </div>

@@ -151,6 +151,7 @@ header p {
     font-size: 1.1rem;
     transition: background 0.15s, border-color 0.15s;
     padding: 0;
+    z-index: 10;
 }
 
 .theme-toggle:hover {
@@ -411,6 +412,36 @@ footer a:hover {
     text-decoration: underline;
 }
 
+.share-links {
+    margin-top: 0.75rem;
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.share-links span {
+    font-weight: 600;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.share-links a {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    transition: all 0.15s;
+}
+
+.share-links a:hover {
+    border-color: var(--accent);
+    background: var(--surface-hover);
+    text-decoration: none !important;
+}
+
 /* Validator Styles */
 .validator-result {
     margin-top: 2rem;
@@ -508,27 +539,106 @@ footer a:hover {
 /* Responsive */
 @media (max-width: 640px) {
     .app {
-        padding: 1rem;
+        padding: 1rem 0.75rem;
+    }
+
+    header {
+        padding-top: 2.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .theme-toggle {
+        top: -0.5rem;
+        right: 0;
     }
 
     header h1 {
-        font-size: 1.35rem;
+        font-size: 1.5rem;
     }
 
+    .header-main {
+        gap: 0.75rem;
+    }
+
+    .logo {
+        width: 40px;
+        height: 40px;
+    }
+
+    /* Stack controls on mobile */
     .controls {
-        gap: 0.5rem;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
     }
 
-    select {
-        min-width: 140px;
+    .field {
+        width: 100%;
     }
 
+    .searchable-select {
+        min-width: 100%;
+    }
+
+    select, input[type="number"], input[type="text"], .search-input {
+        width: 100% !important;
+        min-width: 100%;
+    }
+
+    .checkbox-field {
+        padding-bottom: 0;
+    }
+
+    .btn {
+        width: 100%;
+        padding: 0.75rem;
+    }
+
+    /* Scrollable tabs */
+    .tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 0 -0.75rem 1.5rem -0.75rem;
+        padding: 0 0.75rem;
+        scrollbar-width: none; /* Hide scrollbar Firefox */
+    }
+
+    .tabs::-webkit-scrollbar {
+        display: none; /* Hide scrollbar Chrome/Safari */
+    }
+
+    .tab {
+        flex: 0 0 auto;
+        padding: 0.75rem 1rem;
+    }
+
+    /* Table responsiveness */
     table {
-        font-size: 0.75rem;
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        white-space: nowrap;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
     }
 
-    tbody td {
-        padding: 0.4rem 0.5rem;
+    thead, tbody, tr {
+        display: table;
+        width: 100%;
+        min-width: 600px; /* Ensure table doesn't squash too much */
+    }
+
+    /* Result box on mobile */
+    .result-box {
+        max-width: 100%;
+    }
+
+    .results-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
     }
 }
 
@@ -576,6 +686,15 @@ footer a:hover {
 
 .tooltip-container:hover .tooltip-content {
     visibility: visible;
+}
+
+@media (max-width: 640px) {
+    .tooltip-content {
+        width: 160px;
+        left: auto;
+        right: -20px;
+        transform: none;
+    }
 }
 
 /* History Styles */

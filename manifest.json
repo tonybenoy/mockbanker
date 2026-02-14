@@ -4,7 +4,7 @@
   "description": "Generate and validate test IBANs and Personal IDs",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "background_color": "#0f1117",
   "theme_color": "#2563eb",
   "icons": [
     {
@@ -12,6 +12,22 @@
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "assets/screenshot.png",
+      "sizes": "1280x1000",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "MockBanker Desktop"
+    },
+    {
+      "src": "assets/screenshot_mobile.png",
+      "sizes": "375x812",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "MockBanker Mobile"
     }
   ]
 }
