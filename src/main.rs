@@ -308,6 +308,11 @@ fn IbanTab() -> impl IntoView {
     let results: RwSignal<Vec<IbanRow>> = RwSignal::new(Vec::new());
     let copied_idx: RwSignal<Option<usize>> = RwSignal::new(None);
 
+    let countries_list: Vec<(String, String)> = countries
+        .into_iter()
+        .map(|c| (c.to_string(), country_name(c).to_string()))
+        .collect();
+
     let generate = move |_| {
         let mut rng = thread_rng();
         let c = country.get();
@@ -368,21 +373,11 @@ fn IbanTab() -> impl IntoView {
         <div class="controls">
             <div class="field">
                 <label>"Country"</label>
-                <select on:change=move |ev| {
-                    country.set(event_target_value(&ev));
-                }>
-                    <option value="Random">"Random"</option>
-                    {countries.into_iter().map(|cc| {
-                        let cc_owned = cc.to_string();
-                        let cc2 = cc_owned.clone();
-                        let label = format!("{cc} \u{2014} {}", country_name(cc));
-                        view! {
-                            <option value={cc_owned} selected=move || country.get() == cc2>
-                                {label}
-                            </option>
-                        }
-                    }).collect_view()}
-                </select>
+                <SearchableSelect 
+                    options=countries_list
+                    selected=country
+                    on_change=Callback::new(|_| ())
+                />
             </div>
 
             <div class="field">
@@ -540,25 +535,20 @@ fn PersonalIdTab() -> impl IntoView {
         download_csv("personal_ids.csv", &csv);
     };
 
-    let countries_for_select = id_countries.clone();
+    let countries_for_select: Vec<(String, String)> = id_countries.clone()
+        .into_iter()
+        .map(|(c, n, _)| (c, n))
+        .collect();
 
     view! {
         <div class="controls">
             <div class="field">
                 <label>"Country"</label>
-                <select on:change=move |ev| {
-                    country.set(event_target_value(&ev));
-                }>
-                    {countries_for_select.into_iter().map(|(code, name, _)| {
-                        let code2 = code.clone();
-                        let label = format!("{code} \u{2014} {name}");
-                        view! {
-                            <option value={code} selected=move || country.get() == code2>
-                                {label}
-                            </option>
-                        }
-                    }).collect_view()}
-                </select>
+                <SearchableSelect 
+                    options=countries_for_select
+                    selected=country
+                    on_change=Callback::new(|_| ())
+                />
             </div>
 
             <div class="field">
@@ -725,25 +715,20 @@ fn BankAccountTab() -> impl IntoView {
         download_csv("bank_accounts.csv", &csv);
     };
 
-    let countries_for_select = countries.clone();
+    let countries_for_select: Vec<(String, String)> = countries.clone()
+        .into_iter()
+        .map(|(c, n, _, _)| (c, n))
+        .collect();
 
     view! {
         <div class="controls">
             <div class="field">
                 <label>"Country"</label>
-                <select on:change=move |ev| {
-                    country.set(event_target_value(&ev));
-                }>
-                    {countries_for_select.into_iter().map(|(code, name, _, _)| {
-                        let code2 = code.clone();
-                        let label = format!("{code} \u{2014} {name}");
-                        view! {
-                            <option value={code} selected=move || country.get() == code2>
-                                {label}
-                            </option>
-                        }
-                    }).collect_view()}
-                </select>
+                <SearchableSelect 
+                    options=countries_for_select
+                    selected=country
+                    on_change=Callback::new(|_| ())
+                />
             </div>
 
             <div class="field">
@@ -1035,25 +1020,20 @@ fn SwiftTab() -> impl IntoView {
         download_csv("swift_codes.csv", &csv);
     };
 
-    let countries_for_select = countries.clone();
+    let countries_for_select: Vec<(String, String)> = countries.clone()
+        .into_iter()
+        .map(|code| (code.clone(), country_name(&code).to_string()))
+        .collect();
 
     view! {
         <div class="controls">
             <div class="field">
                 <label>"Country"</label>
-                <select on:change=move |ev| {
-                    country.set(event_target_value(&ev));
-                }>
-                    {countries_for_select.into_iter().map(|code| {
-                        let code2 = code.clone();
-                        let label = format!("{code} \u{2014} {}", country_name(&code));
-                        view! {
-                            <option value={code} selected=move || country.get() == code2>
-                                {label}
-                            </option>
-                        }
-                    }).collect_view()}
-                </select>
+                <SearchableSelect 
+                    options=countries_for_select
+                    selected=country
+                    on_change=Callback::new(|_| ())
+                />
             </div>
 
             <div class="field">
@@ -1195,25 +1175,20 @@ fn CompanyIdTab() -> impl IntoView {
         download_csv("company_ids.csv", &csv);
     };
 
-    let countries_for_select = countries.clone();
+    let countries_for_select: Vec<(String, String)> = countries.clone()
+        .into_iter()
+        .map(|(c, n, _)| (c, n))
+        .collect();
 
     view! {
         <div class="controls">
             <div class="field">
                 <label>"Country"</label>
-                <select on:change=move |ev| {
-                    country.set(event_target_value(&ev));
-                }>
-                    {countries_for_select.into_iter().map(|(code, name, _)| {
-                        let code2 = code.clone();
-                        let label = format!("{code} \u{2014} {name}");
-                        view! {
-                            <option value={code} selected=move || country.get() == code2>
-                                {label}
-                            </option>
-                        }
-                    }).collect_view()}
-                </select>
+                <SearchableSelect 
+                    options=countries_for_select
+                    selected=country
+                    on_change=Callback::new(|_| ())
+                />
             </div>
 
             <div class="field">
@@ -1289,6 +1264,91 @@ fn CompanyIdTab() -> impl IntoView {
 }
 
 #[component]
+fn SearchableSelect(
+    options: Vec<(String, String)>,
+    selected: RwSignal<String>,
+    on_change: Callback<()>,
+) -> impl IntoView {
+    let search_text = RwSignal::new(String::new());
+    let is_open = RwSignal::new(false);
+    let options = StoredValue::new(options);
+    
+    let filtered_options = Memo::new(move |_| {
+        let query = search_text.get().to_lowercase();
+        options.with_value(|opts| {
+            if query.is_empty() {
+                opts.clone()
+            } else {
+                opts.iter()
+                    .filter(|(code, name)| {
+                        code.to_lowercase().contains(&query) || name.to_lowercase().contains(&query)
+                    })
+                    .cloned()
+                    .collect()
+            }
+        })
+    });
+
+    let display_name = Memo::new(move |_| {
+        let current = selected.get();
+        options.with_value(|opts| {
+            opts.iter()
+                .find(|(code, _)| code == &current)
+                .map(|(_, name)| format!("{} \u{2014} {}", current, name))
+                .unwrap_or_else(|| "Select country...".to_string())
+        })
+    });
+
+    view! {
+        <div class="searchable-select"
+            on:focusout=move |_| {
+                set_timeout(move || is_open.set(false), std::time::Duration::from_millis(200));
+            }
+        >
+            <input type="text"
+                class="search-input"
+                placeholder=move || display_name.get()
+                prop:value=move || search_text.get()
+                on:input=move |ev| {
+                    search_text.set(event_target_value(&ev));
+                    is_open.set(true);
+                }
+                on:focus=move |_| is_open.set(true)
+            />
+            
+            <Show when=move || is_open.get()>
+                <div class="dropdown-results">
+                    {move || {
+                        let items = filtered_options.get();
+                        if items.is_empty() {
+                            view! { <div class="dropdown-item">"No results found"</div> }.into_any()
+                        } else {
+                            items.into_iter().map(|(code, name)| {
+                                let code_c = code.clone();
+                                let is_selected = selected.get() == code;
+                                view! {
+                                    <div 
+                                        class=format!("dropdown-item {}", if is_selected { "selected" } else { "" })
+                                        on:click=move |_| {
+                                            selected.set(code_c.clone());
+                                            search_text.set(String::new());
+                                            is_open.set(false);
+                                            on_change.run(());
+                                        }
+                                    >
+                                        {format!("{code} \u{2014} {name}")}
+                                    </div>
+                                }
+                            }).collect_view().into_any()
+                        }
+                    }}
+                </div>
+            </Show>
+        </div>
+    }
+}
+
+#[component]
 fn ValidatorTab() -> impl IntoView {
     let input_value = RwSignal::new(String::new());
     let selected_type = RwSignal::new("iban".to_string());
@@ -1296,13 +1356,38 @@ fn ValidatorTab() -> impl IntoView {
     let result: RwSignal<Option<(bool, String)>> = RwSignal::new(None);
 
     let id_registry = personal_id::Registry::new();
+    let bank_registry = bank_account::Registry::new();
+    let card_registry = credit_card::Registry::new();
+    let swift_registry = swift::Registry::new();
+    let company_registry = company_id::Registry::new();
+
     let id_countries: Vec<(String, String)> = id_registry
         .list_countries()
         .iter()
         .map(|(c, n, _)| (c.to_string(), n.to_string()))
         .collect();
+
+    let bank_countries: Vec<(String, String)> = bank_registry
+        .list_countries()
+        .iter()
+        .map(|(c, n, _, _)| (c.to_string(), n.to_string()))
+        .collect();
     
+    let company_countries: Vec<(String, String)> = company_registry
+        .list_countries()
+        .iter()
+        .map(|(c, n, _)| (c.to_string(), n.to_string()))
+        .collect();
+    
+    let id_countries = StoredValue::new(id_countries);
+    let bank_countries = StoredValue::new(bank_countries);
+    let company_countries = StoredValue::new(company_countries);
+
     let id_registry = StoredValue::new(id_registry);
+    let bank_registry = StoredValue::new(bank_registry);
+    let card_registry = StoredValue::new(card_registry);
+    let swift_registry = StoredValue::new(swift_registry);
+    let company_registry = StoredValue::new(company_registry);
 
     let validate = move |_| {
         let val = input_value.get().trim().to_string();
@@ -1329,6 +1414,33 @@ fn ValidatorTab() -> impl IntoView {
                     }
                 });
             }
+            "bank" => {
+                bank_registry.with_value(|reg| {
+                    match reg.validate(&country.get(), &val) {
+                        Some(true) => result.set(Some((true, "Valid Bank Account for selected country".to_string()))),
+                        Some(false) => result.set(Some((false, "Invalid Bank Account checksum or format".to_string()))),
+                        None => result.set(Some((false, "Unsupported country for Bank Account validation".to_string()))),
+                    }
+                });
+            }
+            "card" => {
+                card_registry.with_value(|reg| {
+                    let is_valid = reg.validate(&val);
+                    result.set(Some((is_valid, if is_valid { "Valid Credit Card (Luhn check passed)".to_string() } else { "Invalid Credit Card (Luhn check failed)".to_string() })));
+                });
+            }
+            "swift" => {
+                swift_registry.with_value(|reg| {
+                    let is_valid = reg.validate(&val);
+                    result.set(Some((is_valid, if is_valid { "Valid SWIFT/BIC format".to_string() } else { "Invalid SWIFT/BIC format".to_string() })));
+                });
+            }
+            "company" => {
+                company_registry.with_value(|reg| {
+                    let is_valid = reg.validate(&country.get(), &val);
+                    result.set(Some((is_valid, if is_valid { "Valid Company ID for selected country".to_string() } else { "Invalid Company ID checksum or format".to_string() })));
+                });
+            }
             _ => {}
         }
     };
@@ -1339,30 +1451,43 @@ fn ValidatorTab() -> impl IntoView {
                 <div class="field">
                     <label>"Type"</label>
                     <select on:change=move |ev| {
-                        selected_type.set(event_target_value(&ev));
+                        let t = event_target_value(&ev);
+                        selected_type.set(t.clone());
                         result.set(None);
+                        if t == "id" { country.set("DE".to_string()); }
+                        else if t == "bank" { country.set("US".to_string()); }
+                        else if t == "company" { country.set("EE".to_string()); }
                     }>
                         <option value="iban">"IBAN"</option>
                         <option value="id">"Personal ID"</option>
+                        <option value="bank">"Bank Account"</option>
+                        <option value="card">"Credit Card"</option>
+                        <option value="swift">"SWIFT/BIC"</option>
+                        <option value="company">"Company ID"</option>
                     </select>
                 </div>
 
-                <Show when=move || selected_type.get() == "id">
+                <Show when=move || {
+                    let t = selected_type.get();
+                    t == "id" || t == "bank" || t == "company"
+                }>
                     <div class="field">
                         <label>"Country"</label>
-                        <select on:change=move |ev| {
-                            country.set(event_target_value(&ev));
-                            result.set(None);
-                        }>
-                            {id_countries.clone().into_iter().map(|(code, name)| {
-                                let code2 = code.clone();
-                                view! {
-                                    <option value={code} selected=move || country.get() == code2>
-                                        {format!("{code} \u{2014} {name}")}
-                                    </option>
-                                }
-                            }).collect_view()}
-                        </select>
+                        {move || {
+                            let list = match selected_type.get().as_str() {
+                                "id" => id_countries.get_value(),
+                                "bank" => bank_countries.get_value(),
+                                "company" => company_countries.get_value(),
+                                _ => Vec::new(),
+                            };
+                            view! {
+                                <SearchableSelect 
+                                    options=list 
+                                    selected=country 
+                                    on_change=Callback::new(move |_| result.set(None)) 
+                                />
+                            }
+                        }}
                     </div>
                 </Show>
 
