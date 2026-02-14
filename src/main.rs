@@ -2,7 +2,7 @@ use leptos::prelude::*;
 use rand::thread_rng;
 use wasm_bindgen::prelude::*;
 
-use eu_test_data_generator::{iban, personal_id};
+use idsmith::{bank_account, company_id, credit_card, iban, personal_id, swift};
 
 fn main() {
     leptos::mount::mount_to_body(App);
@@ -20,6 +20,36 @@ struct IdRow {
     code: String,
     gender: String,
     dob: String,
+    valid: bool,
+}
+
+#[derive(Clone, Debug)]
+struct BankAccountRow {
+    account: String,
+    routing: String,
+    valid: bool,
+}
+
+#[derive(Clone, Debug)]
+struct CreditCardRow {
+    number: String,
+    brand: String,
+    valid: bool,
+}
+
+#[derive(Clone, Debug)]
+struct SwiftRow {
+    code: String,
+    bank: String,
+    country: String,
+    location: String,
+    valid: bool,
+}
+
+#[derive(Clone, Debug)]
+struct CompanyIdRow {
+    code: String,
+    name: String,
     valid: bool,
 }
 
@@ -177,7 +207,7 @@ fn App() -> impl IntoView {
         <div class="app">
             <header>
                 <h1>"MockBanker"</h1>
-                <p>"Generate valid, checksum-correct IBANs and personal IDs \u{2014} runs entirely in your browser"</p>
+                <p>"Generate valid, checksum-correct test data \u{2014} runs entirely in your browser"</p>
                 <button
                     class="theme-toggle"
                     aria-label="Toggle theme"
@@ -200,6 +230,36 @@ fn App() -> impl IntoView {
                 >
                     "Personal ID"
                 </button>
+                <button
+                    class=move || if active_tab.get() == "bank" { "tab active" } else { "tab" }
+                    on:click=move |_| active_tab.set("bank")
+                >
+                    "Bank Account"
+                </button>
+                <button
+                    class=move || if active_tab.get() == "card" { "tab active" } else { "tab" }
+                    on:click=move |_| active_tab.set("card")
+                >
+                    "Credit Card"
+                </button>
+                <button
+                    class=move || if active_tab.get() == "swift" { "tab active" } else { "tab" }
+                    on:click=move |_| active_tab.set("swift")
+                >
+                    "SWIFT/BIC"
+                </button>
+                <button
+                    class=move || if active_tab.get() == "company" { "tab active" } else { "tab" }
+                    on:click=move |_| active_tab.set("company")
+                >
+                    "Company ID"
+                </button>
+                <button
+                    class=move || if active_tab.get() == "validator" { "tab active" } else { "tab" }
+                    on:click=move |_| active_tab.set("validator")
+                >
+                    "Validator"
+                </button>
             </div>
 
             <Show when=move || active_tab.get() == "iban">
@@ -208,6 +268,21 @@ fn App() -> impl IntoView {
             <Show when=move || active_tab.get() == "id">
                 <PersonalIdTab />
             </Show>
+            <Show when=move || active_tab.get() == "bank">
+                <BankAccountTab />
+            </Show>
+            <Show when=move || active_tab.get() == "card">
+                <CreditCardTab />
+            </Show>
+            <Show when=move || active_tab.get() == "swift">
+                <SwiftTab />
+            </Show>
+            <Show when=move || active_tab.get() == "company">
+                <CompanyIdTab />
+            </Show>
+            <Show when=move || active_tab.get() == "validator">
+                <ValidatorTab />
+            </Show>
 
             <footer>
                 <p>
@@ -215,7 +290,8 @@ fn App() -> impl IntoView {
                     <a href="https://github.com/tonybenoy" target="_blank">"Tony Benoy"</a>
                     " & "
                     <a href="https://claude.ai" target="_blank">"Claude"</a>
-                    " \u{00b7} Built with Rust & WebAssembly"
+                    " \u{00b7} Powered by "
+                    <a href="https://github.com/Sunyata-OU/idsmith" target="_blank">"idsmith"</a>
                 </p>
             </footer>
         </div>
@@ -390,10 +466,10 @@ fn IbanTab() -> impl IntoView {
 #[component]
 fn PersonalIdTab() -> impl IntoView {
     let registry = personal_id::Registry::new();
-    let id_countries: Vec<(String, String)> = registry
+    let id_countries: Vec<(String, String, String)> = registry
         .list_countries()
         .iter()
-        .map(|(c, n)| (c.to_string(), n.to_string()))
+        .map(|(c, n, d)| (c.to_string(), n.to_string(), d.to_string()))
         .collect();
 
     let country = RwSignal::new("EE".to_string());
@@ -423,15 +499,15 @@ fn PersonalIdTab() -> impl IntoView {
         let mut rows = Vec::new();
         registry.with_value(|reg| {
             for _ in 0..n {
-                if let Some(code) = reg.generate(&c, &opts, &mut rng)
-                    && let Some(parsed) = reg.parse(&c, &code)
-                {
-                    rows.push(IdRow {
-                        code: parsed.code,
-                        gender: parsed.gender.unwrap_or_default(),
-                        dob: parsed.dob.unwrap_or_default(),
-                        valid: parsed.valid,
-                    });
+                if let Some(code) = reg.generate(&c, &opts, &mut rng) {
+                    if let Some(parsed) = reg.parse(&c, &code) {
+                        rows.push(IdRow {
+                            code: parsed.code,
+                            gender: parsed.gender.unwrap_or_default(),
+                            dob: parsed.dob.unwrap_or_default(),
+                            valid: parsed.valid,
+                        });
+                    }
                 }
             }
         });
@@ -473,7 +549,7 @@ fn PersonalIdTab() -> impl IntoView {
                 <select on:change=move |ev| {
                     country.set(event_target_value(&ev));
                 }>
-                    {countries_for_select.into_iter().map(|(code, name)| {
+                    {countries_for_select.into_iter().map(|(code, name, _)| {
                         let code2 = code.clone();
                         let label = format!("{code} \u{2014} {name}");
                         view! {
@@ -579,5 +655,745 @@ fn PersonalIdTab() -> impl IntoView {
                 </tbody>
             </table>
         </Show>
+    }
+}
+
+#[component]
+fn BankAccountTab() -> impl IntoView {
+    let registry = bank_account::Registry::new();
+    let countries: Vec<(String, String, String, bool)> = registry
+        .list_countries()
+        .iter()
+        .map(|(c, n, d, i)| (c.to_string(), n.to_string(), d.to_string(), *i))
+        .collect();
+
+    let country = RwSignal::new("US".to_string());
+    let count = RwSignal::new(5u32);
+    let results: RwSignal<Vec<BankAccountRow>> = RwSignal::new(Vec::new());
+    let copied_idx: RwSignal<Option<usize>> = RwSignal::new(None);
+
+    let registry = StoredValue::new(registry);
+
+    let generate = move |_| {
+        let mut rng = thread_rng();
+        let c = country.get();
+        let n = count.get();
+        let mut rows = Vec::new();
+        registry.with_value(|reg| {
+            for _ in 0..n {
+                let opts = bank_account::GenOptions::default();
+                if let Some(res) = reg.generate(&c, &opts, &mut rng) {
+                    rows.push(BankAccountRow {
+                        account: res.account_number,
+                        routing: res.bank_code.unwrap_or_default(),
+                        valid: res.valid,
+                    });
+                }
+            }
+        });
+        results.set(rows);
+        copied_idx.set(None);
+    };
+
+    let copy_all = move |_| {
+        let rows = results.get();
+        let text: String = rows
+            .iter()
+            .map(|r| {
+                if r.routing.is_empty() {
+                    r.account.clone()
+                } else {
+                    format!("{} ({})", r.account, r.routing)
+                }
+            })
+            .collect::<Vec<_>>()
+            .join("\n");
+        copy_to_clipboard(&text);
+    };
+
+    let save_csv = move |_| {
+        let rows = results.get();
+        let mut csv = String::from("Account,Routing,Valid\n");
+        for row in rows.iter() {
+            csv.push_str(&format!(
+                "{},{},{}\n",
+                row.account,
+                row.routing,
+                if row.valid { "Yes" } else { "No" }
+            ));
+        }
+        download_csv("bank_accounts.csv", &csv);
+    };
+
+    let countries_for_select = countries.clone();
+
+    view! {
+        <div class="controls">
+            <div class="field">
+                <label>"Country"</label>
+                <select on:change=move |ev| {
+                    country.set(event_target_value(&ev));
+                }>
+                    {countries_for_select.into_iter().map(|(code, name, _, _)| {
+                        let code2 = code.clone();
+                        let label = format!("{code} \u{2014} {name}");
+                        view! {
+                            <option value={code} selected=move || country.get() == code2>
+                                {label}
+                            </option>
+                        }
+                    }).collect_view()}
+                </select>
+            </div>
+
+            <div class="field">
+                <label>"Count"</label>
+                <input type="number" min="1" max="100"
+                    prop:value=move || count.get().to_string()
+                    on:input=move |ev| {
+                        if let Ok(v) = event_target_value(&ev).parse::<u32>() {
+                            count.set(v.clamp(1, 100));
+                        }
+                    }
+                />
+            </div>
+
+            <button class="btn btn-primary" on:click=generate>"Generate"</button>
+
+            <Show when=move || !results.get().is_empty()>
+                <button class="btn btn-secondary" on:click=copy_all>"Copy all"</button>
+                <button class="btn btn-secondary" on:click=save_csv>"Download CSV"</button>
+            </Show>
+        </div>
+
+        <Show when=move || results.get().is_empty()>
+            <div class="empty">"Select a country and click Generate"</div>
+        </Show>
+
+        <Show when=move || !results.get().is_empty()>
+            <div class="results-header">
+                <span>{move || format!("{} results", results.get().len())}</span>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>"Account"</th>
+                        <th>"Routing"</th>
+                        <th>"Valid"</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {move || {
+                        let cidx = copied_idx.get();
+                        results.get().iter().enumerate().map(|(i, row)| {
+                            let account = row.account.clone();
+                            let routing = row.routing.clone();
+                            let copy_text = if routing.is_empty() { account.clone() } else { format!("{} ({})", account, routing) };
+                            let valid_class = if row.valid { "valid-yes" } else { "valid-no" };
+                            let is_copied = cidx == Some(i);
+                            view! {
+                                <tr>
+                                    <td>{account}</td>
+                                    <td>{routing}</td>
+                                    <td class={valid_class}>{if row.valid { "Yes" } else { "No" }}</td>
+                                    <td>
+                                        <button
+                                            class=if is_copied { "btn-copy copied" } else { "btn-copy" }
+                                            on:click=move |_| {
+                                                copy_to_clipboard(&copy_text);
+                                                copied_idx.set(Some(i));
+                                            }
+                                        >
+                                            {if is_copied { "Copied!" } else { "Copy" }}
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        }).collect_view()
+                    }}
+                </tbody>
+            </table>
+        </Show>
+    }
+}
+
+#[component]
+fn CreditCardTab() -> impl IntoView {
+    let registry = credit_card::Registry::new();
+    let brands: Vec<String> = registry
+        .list_brands()
+        .iter()
+        .map(|b| b.to_string())
+        .collect();
+
+    let brand = RwSignal::new("visa".to_string());
+    let count = RwSignal::new(5u32);
+    let results: RwSignal<Vec<CreditCardRow>> = RwSignal::new(Vec::new());
+    let copied_idx: RwSignal<Option<usize>> = RwSignal::new(None);
+
+    let registry = StoredValue::new(registry);
+
+    let generate = move |_| {
+        let mut rng = thread_rng();
+        let b = brand.get();
+        let n = count.get();
+        let mut rows = Vec::new();
+        registry.with_value(|reg| {
+            for _ in 0..n {
+                let opts = credit_card::GenOptions { brand: Some(b.clone()) };
+                if let Some(res) = reg.generate(&opts, &mut rng) {
+                    rows.push(CreditCardRow {
+                        number: res.number,
+                        brand: res.brand,
+                        valid: res.valid,
+                    });
+                }
+            }
+        });
+        results.set(rows);
+        copied_idx.set(None);
+    };
+
+    let copy_all = move |_| {
+        let rows = results.get();
+        let text: String = rows
+            .iter()
+            .map(|r| r.number.as_str())
+            .collect::<Vec<_>>()
+            .join("\n");
+        copy_to_clipboard(&text);
+    };
+
+    let save_csv = move |_| {
+        let rows = results.get();
+        let mut csv = String::from("Number,Brand,Valid\n");
+        for row in rows.iter() {
+            csv.push_str(&format!(
+                "{},{},{}\n",
+                row.number,
+                row.brand,
+                if row.valid { "Yes" } else { "No" }
+            ));
+        }
+        download_csv("credit_cards.csv", &csv);
+    };
+
+    let brands_for_select = brands.clone();
+
+    view! {
+        <div class="controls">
+            <div class="field">
+                <label>"Brand"</label>
+                <select on:change=move |ev| {
+                    brand.set(event_target_value(&ev));
+                }>
+                    {brands_for_select.into_iter().map(|id| {
+                        let id2 = id.clone();
+                        let label = id.clone();
+                        view! {
+                            <option value={id} selected=move || brand.get() == id2>
+                                {label}
+                            </option>
+                        }
+                    }).collect_view()}
+                </select>
+            </div>
+
+            <div class="field">
+                <label>"Count"</label>
+                <input type="number" min="1" max="100"
+                    prop:value=move || count.get().to_string()
+                    on:input=move |ev| {
+                        if let Ok(v) = event_target_value(&ev).parse::<u32>() {
+                            count.set(v.clamp(1, 100));
+                        }
+                    }
+                />
+            </div>
+
+            <button class="btn btn-primary" on:click=generate>"Generate"</button>
+
+            <Show when=move || !results.get().is_empty()>
+                <button class="btn btn-secondary" on:click=copy_all>"Copy all"</button>
+                <button class="btn btn-secondary" on:click=save_csv>"Download CSV"</button>
+            </Show>
+        </div>
+
+        <Show when=move || results.get().is_empty()>
+            <div class="empty">"Select a brand and click Generate"</div>
+        </Show>
+
+        <Show when=move || !results.get().is_empty()>
+            <div class="results-header">
+                <span>{move || format!("{} results", results.get().len())}</span>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>"Number"</th>
+                        <th>"Brand"</th>
+                        <th>"Valid"</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {move || {
+                        let cidx = copied_idx.get();
+                        results.get().iter().enumerate().map(|(i, row)| {
+                            let number = row.number.clone();
+                            let copy_text = number.clone();
+                            let brand = row.brand.clone();
+                            let valid_class = if row.valid { "valid-yes" } else { "valid-no" };
+                            let is_copied = cidx == Some(i);
+                            view! {
+                                <tr>
+                                    <td>{number}</td>
+                                    <td>{brand}</td>
+                                    <td class={valid_class}>{if row.valid { "Yes" } else { "No" }}</td>
+                                    <td>
+                                        <button
+                                            class=if is_copied { "btn-copy copied" } else { "btn-copy" }
+                                            on:click=move |_| {
+                                                copy_to_clipboard(&copy_text);
+                                                copied_idx.set(Some(i));
+                                            }
+                                        >
+                                            {if is_copied { "Copied!" } else { "Copy" }}
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        }).collect_view()
+                    }}
+                </tbody>
+            </table>
+        </Show>
+    }
+}
+
+#[component]
+fn SwiftTab() -> impl IntoView {
+    let registry = swift::Registry::new();
+    let countries: Vec<String> = iban::supported_countries()
+        .into_iter()
+        .map(|c| c.to_string())
+        .collect();
+
+    let country = RwSignal::new("DE".to_string());
+    let count = RwSignal::new(5u32);
+    let results: RwSignal<Vec<SwiftRow>> = RwSignal::new(Vec::new());
+    let copied_idx: RwSignal<Option<usize>> = RwSignal::new(None);
+
+    let registry = StoredValue::new(registry);
+
+    let generate = move |_| {
+        let mut rng = thread_rng();
+        let c = country.get();
+        let n = count.get();
+        let mut rows = Vec::new();
+        registry.with_value(|reg| {
+            for _ in 0..n {
+                let opts = swift::GenOptions { country: Some(c.clone()) };
+                let res = reg.generate(&opts, &mut rng);
+                rows.push(SwiftRow {
+                    code: res.code,
+                    bank: res.bank,
+                    country: res.country,
+                    location: res.location,
+                    valid: res.valid,
+                });
+            }
+        });
+        results.set(rows);
+        copied_idx.set(None);
+    };
+
+    let copy_all = move |_| {
+        let rows = results.get();
+        let text: String = rows
+            .iter()
+            .map(|r| r.code.as_str())
+            .collect::<Vec<_>>()
+            .join("\n");
+        copy_to_clipboard(&text);
+    };
+
+    let save_csv = move |_| {
+        let rows = results.get();
+        let mut csv = String::from("SWIFT/BIC,Bank,Country,Location,Valid\n");
+        for row in rows.iter() {
+            csv.push_str(&format!(
+                "{},{},{},{},{}\n",
+                row.code,
+                row.bank,
+                row.country,
+                row.location,
+                if row.valid { "Yes" } else { "No" }
+            ));
+        }
+        download_csv("swift_codes.csv", &csv);
+    };
+
+    let countries_for_select = countries.clone();
+
+    view! {
+        <div class="controls">
+            <div class="field">
+                <label>"Country"</label>
+                <select on:change=move |ev| {
+                    country.set(event_target_value(&ev));
+                }>
+                    {countries_for_select.into_iter().map(|code| {
+                        let code2 = code.clone();
+                        let label = format!("{code} \u{2014} {}", country_name(&code));
+                        view! {
+                            <option value={code} selected=move || country.get() == code2>
+                                {label}
+                            </option>
+                        }
+                    }).collect_view()}
+                </select>
+            </div>
+
+            <div class="field">
+                <label>"Count"</label>
+                <input type="number" min="1" max="100"
+                    prop:value=move || count.get().to_string()
+                    on:input=move |ev| {
+                        if let Ok(v) = event_target_value(&ev).parse::<u32>() {
+                            count.set(v.clamp(1, 100));
+                        }
+                    }
+                />
+            </div>
+
+            <button class="btn btn-primary" on:click=generate>"Generate"</button>
+
+            <Show when=move || !results.get().is_empty()>
+                <button class="btn btn-secondary" on:click=copy_all>"Copy all"</button>
+                <button class="btn btn-secondary" on:click=save_csv>"Download CSV"</button>
+            </Show>
+        </div>
+
+        <Show when=move || results.get().is_empty()>
+            <div class="empty">"Select a country and click Generate"</div>
+        </Show>
+
+        <Show when=move || !results.get().is_empty()>
+            <div class="results-header">
+                <span>{move || format!("{} results", results.get().len())}</span>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>"SWIFT/BIC"</th>
+                        <th>"Bank"</th>
+                        <th>"Country"</th>
+                        <th>"Location"</th>
+                        <th>"Valid"</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {move || {
+                        let cidx = copied_idx.get();
+                        results.get().iter().enumerate().map(|(i, row)| {
+                            let code = row.code.clone();
+                            let copy_text = code.clone();
+                            let bank = row.bank.clone();
+                            let country = row.country.clone();
+                            let location = row.location.clone();
+                            let valid_class = if row.valid { "valid-yes" } else { "valid-no" };
+                            let is_copied = cidx == Some(i);
+                            view! {
+                                <tr>
+                                    <td>{code}</td>
+                                    <td>{bank}</td>
+                                    <td>{country}</td>
+                                    <td>{location}</td>
+                                    <td class={valid_class}>{if row.valid { "Yes" } else { "No" }}</td>
+                                    <td>
+                                        <button
+                                            class=if is_copied { "btn-copy copied" } else { "btn-copy" }
+                                            on:click=move |_| {
+                                                copy_to_clipboard(&copy_text);
+                                                copied_idx.set(Some(i));
+                                            }
+                                        >
+                                            {if is_copied { "Copied!" } else { "Copy" }}
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        }).collect_view()
+                    }}
+                </tbody>
+            </table>
+        </Show>
+    }
+}
+
+#[component]
+fn CompanyIdTab() -> impl IntoView {
+    let registry = company_id::Registry::new();
+    let countries: Vec<(String, String, String)> = registry
+        .list_countries()
+        .iter()
+        .map(|(c, n, d)| (c.to_string(), n.to_string(), d.to_string()))
+        .collect();
+
+    let country = RwSignal::new("EE".to_string());
+    let count = RwSignal::new(5u32);
+    let results: RwSignal<Vec<CompanyIdRow>> = RwSignal::new(Vec::new());
+    let copied_idx: RwSignal<Option<usize>> = RwSignal::new(None);
+
+    let registry = StoredValue::new(registry);
+
+    let generate = move |_| {
+        let mut rng = thread_rng();
+        let c = country.get();
+        let n = count.get();
+        let mut rows = Vec::new();
+        registry.with_value(|reg| {
+            for _ in 0..n {
+                let opts = company_id::GenOptions { country: Some(c.clone()) };
+                if let Some(res) = reg.generate(&opts, &mut rng) {
+                    rows.push(CompanyIdRow {
+                        code: res.code,
+                        name: res.name,
+                        valid: res.valid,
+                    });
+                }
+            }
+        });
+        results.set(rows);
+        copied_idx.set(None);
+    };
+
+    let copy_all = move |_| {
+        let rows = results.get();
+        let text: String = rows
+            .iter()
+            .map(|r| r.code.as_str())
+            .collect::<Vec<_>>()
+            .join("\n");
+        copy_to_clipboard(&text);
+    };
+
+    let save_csv = move |_| {
+        let rows = results.get();
+        let mut csv = String::from("Code,Name,Valid\n");
+        for row in rows.iter() {
+            csv.push_str(&format!(
+                "{},{},{}\n",
+                row.code,
+                row.name,
+                if row.valid { "Yes" } else { "No" }
+            ));
+        }
+        download_csv("company_ids.csv", &csv);
+    };
+
+    let countries_for_select = countries.clone();
+
+    view! {
+        <div class="controls">
+            <div class="field">
+                <label>"Country"</label>
+                <select on:change=move |ev| {
+                    country.set(event_target_value(&ev));
+                }>
+                    {countries_for_select.into_iter().map(|(code, name, _)| {
+                        let code2 = code.clone();
+                        let label = format!("{code} \u{2014} {name}");
+                        view! {
+                            <option value={code} selected=move || country.get() == code2>
+                                {label}
+                            </option>
+                        }
+                    }).collect_view()}
+                </select>
+            </div>
+
+            <div class="field">
+                <label>"Count"</label>
+                <input type="number" min="1" max="100"
+                    prop:value=move || count.get().to_string()
+                    on:input=move |ev| {
+                        if let Ok(v) = event_target_value(&ev).parse::<u32>() {
+                            count.set(v.clamp(1, 100));
+                        }
+                    }
+                />
+            </div>
+
+            <button class="btn btn-primary" on:click=generate>"Generate"</button>
+
+            <Show when=move || !results.get().is_empty()>
+                <button class="btn btn-secondary" on:click=copy_all>"Copy all"</button>
+                <button class="btn btn-secondary" on:click=save_csv>"Download CSV"</button>
+            </Show>
+        </div>
+
+        <Show when=move || results.get().is_empty()>
+            <div class="empty">"Select a country and click Generate"</div>
+        </Show>
+
+        <Show when=move || !results.get().is_empty()>
+            <div class="results-header">
+                <span>{move || format!("{} results", results.get().len())}</span>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>"Code"</th>
+                        <th>"Name"</th>
+                        <th>"Valid"</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {move || {
+                        let cidx = copied_idx.get();
+                        results.get().iter().enumerate().map(|(i, row)| {
+                            let code = row.code.clone();
+                            let copy_text = code.clone();
+                            let name = row.name.clone();
+                            let valid_class = if row.valid { "valid-yes" } else { "valid-no" };
+                            let is_copied = cidx == Some(i);
+                            view! {
+                                <tr>
+                                    <td>{code}</td>
+                                    <td>{name}</td>
+                                    <td class={valid_class}>{if row.valid { "Yes" } else { "No" }}</td>
+                                    <td>
+                                        <button
+                                            class=if is_copied { "btn-copy copied" } else { "btn-copy" }
+                                            on:click=move |_| {
+                                                copy_to_clipboard(&copy_text);
+                                                copied_idx.set(Some(i));
+                                            }
+                                        >
+                                            {if is_copied { "Copied!" } else { "Copy" }}
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        }).collect_view()
+                    }}
+                </tbody>
+            </table>
+        </Show>
+    }
+}
+
+#[component]
+fn ValidatorTab() -> impl IntoView {
+    let input_value = RwSignal::new(String::new());
+    let selected_type = RwSignal::new("iban".to_string());
+    let country = RwSignal::new("DE".to_string());
+    let result: RwSignal<Option<(bool, String)>> = RwSignal::new(None);
+
+    let id_registry = personal_id::Registry::new();
+    let id_countries: Vec<(String, String)> = id_registry
+        .list_countries()
+        .iter()
+        .map(|(c, n, _)| (c.to_string(), n.to_string()))
+        .collect();
+    
+    let id_registry = StoredValue::new(id_registry);
+
+    let validate = move |_| {
+        let val = input_value.get().trim().to_string();
+        if val.is_empty() {
+            result.set(None);
+            return;
+        }
+
+        match selected_type.get().as_str() {
+            "iban" => {
+                let is_valid = iban::validate_iban(&val);
+                result.set(Some((is_valid, if is_valid { "Valid IBAN".to_string() } else { "Invalid IBAN checksum or format".to_string() })));
+            }
+            "id" => {
+                id_registry.with_value(|reg| {
+                    if let Some(parsed) = reg.parse(&country.get(), &val) {
+                        if parsed.valid {
+                            result.set(Some((true, format!("Valid ID ({} / {})", parsed.gender.unwrap_or_default(), parsed.dob.unwrap_or_default()))));
+                        } else {
+                            result.set(Some((false, "Invalid ID for selected country".to_string())));
+                        }
+                    } else {
+                        result.set(Some((false, "Could not parse ID".to_string())));
+                    }
+                });
+            }
+            _ => {}
+        }
+    };
+
+    view! {
+        <div class="validator-tab">
+            <div class="controls">
+                <div class="field">
+                    <label>"Type"</label>
+                    <select on:change=move |ev| {
+                        selected_type.set(event_target_value(&ev));
+                        result.set(None);
+                    }>
+                        <option value="iban">"IBAN"</option>
+                        <option value="id">"Personal ID"</option>
+                    </select>
+                </div>
+
+                <Show when=move || selected_type.get() == "id">
+                    <div class="field">
+                        <label>"Country"</label>
+                        <select on:change=move |ev| {
+                            country.set(event_target_value(&ev));
+                            result.set(None);
+                        }>
+                            {id_countries.clone().into_iter().map(|(code, name)| {
+                                let code2 = code.clone();
+                                view! {
+                                    <option value={code} selected=move || country.get() == code2>
+                                        {format!("{code} \u{2014} {name}")}
+                                    </option>
+                                }
+                            }).collect_view()}
+                        </select>
+                    </div>
+                </Show>
+
+                <div class="field" style="flex: 1">
+                    <label>"Value to validate"</label>
+                    <input type="text" 
+                        placeholder="Enter code here..."
+                        prop:value=move || input_value.get()
+                        on:input=move |ev| input_value.set(event_target_value(&ev))
+                        on:keydown=move |ev| {
+                            if ev.key() == "Enter" {
+                                validate(());
+                            }
+                        }
+                    />
+                </div>
+
+                <button class="btn btn-primary" on:click=move |_| validate(())>"Validate"</button>
+            </div>
+
+            <div class="validator-result">
+                {move || result.get().map(|(valid, msg)| {
+                    let class = if valid { "result-valid" } else { "result-invalid" };
+                    view! {
+                        <div class=format!("result-box {}", class)>
+                            <strong>{if valid { "VALID" } else { "INVALID" }}</strong>
+                            <p>{msg}</p>
+                        </div>
+                    }
+                })}
+            </div>
+        </div>
     }
 }

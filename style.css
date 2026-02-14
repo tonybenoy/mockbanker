@@ -114,6 +114,7 @@ header p {
 /* Tabs */
 .tabs {
     display: flex;
+    flex-wrap: wrap;
     gap: 0;
     margin-bottom: 1.5rem;
     border-bottom: 2px solid var(--border);
@@ -362,6 +363,54 @@ footer a {
 
 footer a:hover {
     text-decoration: underline;
+}
+
+/* Validator Styles */
+.validator-result {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
+}
+
+.result-box {
+    padding: 1.5rem;
+    border-radius: 8px;
+    text-align: center;
+    max-width: 400px;
+    width: 100%;
+    border: 2px solid transparent;
+}
+
+.result-valid {
+    background-color: rgba(34, 197, 94, 0.1);
+    border-color: #22c55e;
+    color: #16a34a;
+}
+
+.result-invalid {
+    background-color: rgba(239, 68, 68, 0.1);
+    border-color: #ef4444;
+    color: #dc2626;
+}
+
+.result-box strong {
+    font-size: 1.25rem;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.result-box p {
+    margin: 0;
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+[data-theme="dark"] .result-valid {
+    background-color: rgba(34, 197, 94, 0.2);
+}
+
+[data-theme="dark"] .result-invalid {
+    background-color: rgba(239, 68, 68, 0.2);
 }
 
 /* Responsive */

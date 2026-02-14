@@ -276,13 +276,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
 
 [[package]]
-name = "eu-test-data-generator"
-version = "0.3.0"
-dependencies = [
- "rand",
-]
-
-[[package]]
 name = "event-listener"
 version = "5.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -621,6 +614,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "idsmith"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0f77c76561b014c47e65c2203aed0b3791938d49feb495be0c83c3eeababfffb"
+dependencies = [
+ "rand",
+]
+
+[[package]]
 name = "indexmap"
 version = "2.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -844,8 +846,8 @@ checksum = "f8ca58f447f06ed17d5fc4043ce1b10dd205e060fb3ce5b979b8ed8e59ff3f79"
 name = "mockbanker"
 version = "0.1.0"
 dependencies = [
- "eu-test-data-generator",
  "getrandom 0.2.17",
+ "idsmith",
  "leptos",
  "rand",
  "wasm-bindgen",
