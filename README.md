@@ -1,8 +1,15 @@
-# MockBanker
+# <img src="assets/logo.svg" width="48" height="48" valign="bottom" /> MockBanker
 
 Generate and validate valid, checksum-correct **IBANs**, **Personal IDs**, **Credit Cards**, and more directly in your browser. No installation, no server — everything runs client-side via WebAssembly.
 
 **[Try it live](https://tonybenoy.github.io/mockbanker/)**
+
+## Screenshots
+
+<p align="center">
+  <img src="assets/screenshot.png" width="600" alt="MockBanker Desktop" />
+  <img src="assets/screenshot_mobile.png" width="200" alt="MockBanker Mobile" />
+</p>
 
 ## Features
 

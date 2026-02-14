@@ -85,6 +85,12 @@ header {
     margin-bottom: 0.25rem;
 }
 
+.logo {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+}
+
 .header-badges {
     display: flex;
     gap: 0.5rem;

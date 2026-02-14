@@ -282,6 +282,7 @@ fn App() -> impl IntoView {
         <div class="app">
             <header>
                 <div class="header-main">
+                    <img src="assets/logo.svg" alt="MockBanker Logo" class="logo" />
                     <h1>"MockBanker"</h1>
                     <div class="header-badges">
                         <Show when=move || !is_online.get()>
