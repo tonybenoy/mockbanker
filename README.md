@@ -8,7 +8,7 @@ Generate and validate valid, checksum-correct **IBANs**, **Personal IDs**, **Cre
 
 <p align="center">
   <img src="assets/screenshot.png" width="600" alt="MockBanker Desktop" />
-  <img src="assets/screenshot_mobile.png" width="200" alt="MockBanker Mobile" />
+  
 </p>
 
 ## Features
