@@ -3,7 +3,7 @@ name = "mockbanker"
 version = "0.1.0"
 edition = "2024"
 authors = ["Tony Benoy <me@tonybenoy.com>"]
-description = "Browser-based generator for valid test IBANs and personal ID codes — 96 countries, checksum-correct, runs entirely in WebAssembly"
+description = "Browser-based generator for valid test IBANs, personal IDs, passports, driver's licenses, tax IDs, VAT numbers, LEI codes and more — 250+ countries, checksum-correct, runs entirely in WebAssembly"
 license = "MIT"
 repository = "https://github.com/tonybenoy/mockbanker"
 keywords = ["iban", "test-data", "wasm", "personal-id", "generator"]
@@ -14,7 +14,7 @@ leptos = { version = "0.7", features = ["csr"] }
 rand = "0.8"
 getrandom = { version = "0.2", features = ["js"] }
 wasm-bindgen = "0.2"
-idsmith = { version = "0.4", default-features = false }
+idsmith = { version = "0.5", default-features = false }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 js-sys = "0.3"

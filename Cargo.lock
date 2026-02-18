@@ -615,9 +615,9 @@ dependencies = [
 
 [[package]]
 name = "idsmith"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0f77c76561b014c47e65c2203aed0b3791938d49feb495be0c83c3eeababfffb"
+checksum = "0817c20a81b52ba10732ff6b764fa717bfcf1a348e240b887ccbe5a501ae02a0"
 dependencies = [
  "rand",
 ]

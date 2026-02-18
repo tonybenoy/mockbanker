@@ -4,7 +4,7 @@ use rand::thread_rng;
 use wasm_bindgen::JsCast;
 use wasm_bindgen::prelude::*;
 
-use idsmith::{bank_account, company_id, credit_card, iban, personal_id, swift};
+use idsmith::{bank_account, company_id, countries, credit_card, driver_license, iban, lei, passport, personal_id, swift, tax_id, vat};
 
 #[wasm_bindgen(inline_js = r#"
 export function copy_text(text) {
@@ -90,95 +90,7 @@ fn download_csv(filename: &str, content: &str) {
 }
 
 fn country_name(code: &str) -> &'static str {
-    match code {
-        "AD" => "Andorra",
-        "AE" => "United Arab Emirates",
-        "AL" => "Albania",
-        "AT" => "Austria",
-        "AZ" => "Azerbaijan",
-        "BA" => "Bosnia and Herzegovina",
-        "BE" => "Belgium",
-        "BG" => "Bulgaria",
-        "BH" => "Bahrain",
-        "BI" => "Burundi",
-        "BR" => "Brazil",
-        "BY" => "Belarus",
-        "CH" => "Switzerland",
-        "CR" => "Costa Rica",
-        "CY" => "Cyprus",
-        "CZ" => "Czech Republic",
-        "DE" => "Germany",
-        "DJ" => "Djibouti",
-        "DK" => "Denmark",
-        "DO" => "Dominican Republic",
-        "EE" => "Estonia",
-        "EG" => "Egypt",
-        "ES" => "Spain",
-        "FI" => "Finland",
-        "FK" => "Falkland Islands",
-        "FO" => "Faroe Islands",
-        "FR" => "France",
-        "GB" => "United Kingdom",
-        "GE" => "Georgia",
-        "GI" => "Gibraltar",
-        "GL" => "Greenland",
-        "GR" => "Greece",
-        "GT" => "Guatemala",
-        "HR" => "Croatia",
-        "HU" => "Hungary",
-        "IE" => "Ireland",
-        "IL" => "Israel",
-        "IQ" => "Iraq",
-        "IS" => "Iceland",
-        "IT" => "Italy",
-        "JO" => "Jordan",
-        "KW" => "Kuwait",
-        "KZ" => "Kazakhstan",
-        "LB" => "Lebanon",
-        "LC" => "Saint Lucia",
-        "LI" => "Liechtenstein",
-        "LT" => "Lithuania",
-        "LU" => "Luxembourg",
-        "LV" => "Latvia",
-        "LY" => "Libya",
-        "MC" => "Monaco",
-        "MD" => "Moldova",
-        "ME" => "Montenegro",
-        "MK" => "North Macedonia",
-        "MN" => "Mongolia",
-        "MR" => "Mauritania",
-        "MT" => "Malta",
-        "MU" => "Mauritius",
-        "NI" => "Nicaragua",
-        "NL" => "Netherlands",
-        "NO" => "Norway",
-        "PK" => "Pakistan",
-        "PL" => "Poland",
-        "PS" => "Palestine",
-        "PT" => "Portugal",
-        "QA" => "Qatar",
-        "RO" => "Romania",
-        "RS" => "Serbia",
-        "RU" => "Russia",
-        "SA" => "Saudi Arabia",
-        "SC" => "Seychelles",
-        "SD" => "Sudan",
-        "SE" => "Sweden",
-        "SI" => "Slovenia",
-        "SK" => "Slovakia",
-        "SM" => "San Marino",
-        "SO" => "Somalia",
-        "ST" => "S\u{00e3}o Tom\u{00e9} and Pr\u{00ed}ncipe",
-        "SV" => "El Salvador",
-        "TL" => "Timor-Leste",
-        "TN" => "Tunisia",
-        "TR" => "Turkey",
-        "UA" => "Ukraine",
-        "VA" => "Vatican City",
-        "VG" => "British Virgin Islands",
-        "XK" => "Kosovo",
-        _ => "Unknown",
-    }
+    countries::get_country_name(code).unwrap_or("Unknown")
 }
 
 fn main() {
@@ -227,6 +139,48 @@ struct SwiftRow {
 struct CompanyIdRow {
     code: String,
     name: String,
+    valid: bool,
+}
+
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+struct DriverLicenseRow {
+    code: String,
+    name: String,
+    country: String,
+    state: Option<String>,
+    valid: bool,
+}
+
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+struct PassportRow {
+    code: String,
+    name: String,
+    country: String,
+    valid: bool,
+}
+
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+struct TaxIdRow {
+    code: String,
+    name: String,
+    country: String,
+    holder_type: Option<String>,
+    valid: bool,
+}
+
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+struct VatRow {
+    code: String,
+    country_code: String,
+    country_name: String,
+    valid: bool,
+}
+
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+struct LeiRow {
+    code: String,
+    lou: String,
+    country_code: String,
     valid: bool,
 }
 
@@ -341,6 +295,36 @@ fn App() -> impl IntoView {
                     "Company ID"
                 </button>
                 <button
+                    class=move || if active_tab.get() == "driver_license" { "tab active" } else { "tab" }
+                    on:click=move |_| active_tab.set("driver_license")
+                >
+                    "Driver's License"
+                </button>
+                <button
+                    class=move || if active_tab.get() == "passport" { "tab active" } else { "tab" }
+                    on:click=move |_| active_tab.set("passport")
+                >
+                    "Passport"
+                </button>
+                <button
+                    class=move || if active_tab.get() == "tax_id" { "tab active" } else { "tab" }
+                    on:click=move |_| active_tab.set("tax_id")
+                >
+                    "Tax ID"
+                </button>
+                <button
+                    class=move || if active_tab.get() == "vat" { "tab active" } else { "tab" }
+                    on:click=move |_| active_tab.set("vat")
+                >
+                    "VAT"
+                </button>
+                <button
+                    class=move || if active_tab.get() == "lei" { "tab active" } else { "tab" }
+                    on:click=move |_| active_tab.set("lei")
+                >
+                    "LEI"
+                </button>
+                <button
                     class=move || if active_tab.get() == "validator" { "tab active" } else { "tab" }
                     on:click=move |_| active_tab.set("validator")
                 >
@@ -371,6 +355,21 @@ fn App() -> impl IntoView {
             </Show>
             <Show when=move || active_tab.get() == "company">
                 <CompanyIdTab />
+            </Show>
+            <Show when=move || active_tab.get() == "driver_license">
+                <DriverLicenseTab />
+            </Show>
+            <Show when=move || active_tab.get() == "passport">
+                <PassportTab />
+            </Show>
+            <Show when=move || active_tab.get() == "tax_id">
+                <TaxIdTab />
+            </Show>
+            <Show when=move || active_tab.get() == "vat">
+                <VatTab />
+            </Show>
+            <Show when=move || active_tab.get() == "lei">
+                <LeiTab />
             </Show>
             <Show when=move || active_tab.get() == "validator">
                 <ValidatorTab />
@@ -977,6 +976,24 @@ fn BankAccountTab() -> impl IntoView {
         download_csv("bank_accounts.csv", &csv);
     };
 
+    let save_json = move |_| {
+        let rows = results.get();
+        let json = serde_json::to_string_pretty(&rows).unwrap_or_default();
+        download_file("bank_accounts.json", &json, "application/json;charset=utf-8;");
+    };
+
+    let save_sql = move |_| {
+        let rows = results.get();
+        let mut sql = String::from("CREATE TABLE IF NOT EXISTS bank_accounts (account TEXT, routing TEXT, valid BOOLEAN);\n");
+        for row in rows.iter() {
+            sql.push_str(&format!(
+                "INSERT INTO bank_accounts (account, routing, valid) VALUES ('{}', '{}', {});\n",
+                row.account, row.routing, row.valid
+            ));
+        }
+        download_file("bank_accounts.sql", &sql, "text/plain;charset=utf-8;");
+    };
+
     let countries_for_select: Vec<(String, String)> = countries
         .clone()
         .into_iter()
@@ -1010,7 +1027,9 @@ fn BankAccountTab() -> impl IntoView {
 
             <Show when=move || !results.get().is_empty()>
                 <button class="btn btn-secondary" on:click=copy_all>"Copy all"</button>
-                <button class="btn btn-secondary" on:click=save_csv>"Download CSV"</button>
+                <button class="btn btn-secondary" on:click=save_csv>"CSV"</button>
+                <button class="btn btn-secondary" on:click=save_json>"JSON"</button>
+                <button class="btn btn-secondary" on:click=save_sql>"SQL"</button>
             </Show>
         </div>
 
@@ -1129,6 +1148,24 @@ fn CreditCardTab() -> impl IntoView {
         download_csv("credit_cards.csv", &csv);
     };
 
+    let save_json = move |_| {
+        let rows = results.get();
+        let json = serde_json::to_string_pretty(&rows).unwrap_or_default();
+        download_file("credit_cards.json", &json, "application/json;charset=utf-8;");
+    };
+
+    let save_sql = move |_| {
+        let rows = results.get();
+        let mut sql = String::from("CREATE TABLE IF NOT EXISTS credit_cards (number TEXT, brand TEXT, valid BOOLEAN);\n");
+        for row in rows.iter() {
+            sql.push_str(&format!(
+                "INSERT INTO credit_cards (number, brand, valid) VALUES ('{}', '{}', {});\n",
+                row.number, row.brand, row.valid
+            ));
+        }
+        download_file("credit_cards.sql", &sql, "text/plain;charset=utf-8;");
+    };
+
     let brands_for_select = brands.clone();
 
     view! {
@@ -1166,7 +1203,9 @@ fn CreditCardTab() -> impl IntoView {
 
             <Show when=move || !results.get().is_empty()>
                 <button class="btn btn-secondary" on:click=copy_all>"Copy all"</button>
-                <button class="btn btn-secondary" on:click=save_csv>"Download CSV"</button>
+                <button class="btn btn-secondary" on:click=save_csv>"CSV"</button>
+                <button class="btn btn-secondary" on:click=save_json>"JSON"</button>
+                <button class="btn btn-secondary" on:click=save_sql>"SQL"</button>
             </Show>
         </div>
 
@@ -1287,6 +1326,24 @@ fn SwiftTab() -> impl IntoView {
         download_csv("swift_codes.csv", &csv);
     };
 
+    let save_json = move |_| {
+        let rows = results.get();
+        let json = serde_json::to_string_pretty(&rows).unwrap_or_default();
+        download_file("swift_codes.json", &json, "application/json;charset=utf-8;");
+    };
+
+    let save_sql = move |_| {
+        let rows = results.get();
+        let mut sql = String::from("CREATE TABLE IF NOT EXISTS swift_codes (code TEXT, bank TEXT, country TEXT, location TEXT, valid BOOLEAN);\n");
+        for row in rows.iter() {
+            sql.push_str(&format!(
+                "INSERT INTO swift_codes (code, bank, country, location, valid) VALUES ('{}', '{}', '{}', '{}', {});\n",
+                row.code, row.bank, row.country, row.location, row.valid
+            ));
+        }
+        download_file("swift_codes.sql", &sql, "text/plain;charset=utf-8;");
+    };
+
     let countries_for_select: Vec<(String, String)> = countries
         .clone()
         .into_iter()
@@ -1320,7 +1377,9 @@ fn SwiftTab() -> impl IntoView {
 
             <Show when=move || !results.get().is_empty()>
                 <button class="btn btn-secondary" on:click=copy_all>"Copy all"</button>
-                <button class="btn btn-secondary" on:click=save_csv>"Download CSV"</button>
+                <button class="btn btn-secondary" on:click=save_csv>"CSV"</button>
+                <button class="btn btn-secondary" on:click=save_json>"JSON"</button>
+                <button class="btn btn-secondary" on:click=save_sql>"SQL"</button>
             </Show>
         </div>
 
@@ -1445,6 +1504,24 @@ fn CompanyIdTab() -> impl IntoView {
         download_csv("company_ids.csv", &csv);
     };
 
+    let save_json = move |_| {
+        let rows = results.get();
+        let json = serde_json::to_string_pretty(&rows).unwrap_or_default();
+        download_file("company_ids.json", &json, "application/json;charset=utf-8;");
+    };
+
+    let save_sql = move |_| {
+        let rows = results.get();
+        let mut sql = String::from("CREATE TABLE IF NOT EXISTS company_ids (code TEXT, name TEXT, valid BOOLEAN);\n");
+        for row in rows.iter() {
+            sql.push_str(&format!(
+                "INSERT INTO company_ids (code, name, valid) VALUES ('{}', '{}', {});\n",
+                row.code, row.name, row.valid
+            ));
+        }
+        download_file("company_ids.sql", &sql, "text/plain;charset=utf-8;");
+    };
+
     let countries_for_select: Vec<(String, String)> = countries
         .clone()
         .into_iter()
@@ -1478,7 +1555,9 @@ fn CompanyIdTab() -> impl IntoView {
 
             <Show when=move || !results.get().is_empty()>
                 <button class="btn btn-secondary" on:click=copy_all>"Copy all"</button>
-                <button class="btn btn-secondary" on:click=save_csv>"Download CSV"</button>
+                <button class="btn btn-secondary" on:click=save_csv>"CSV"</button>
+                <button class="btn btn-secondary" on:click=save_json>"JSON"</button>
+                <button class="btn btn-secondary" on:click=save_sql>"SQL"</button>
             </Show>
         </div>
 
@@ -1512,6 +1591,896 @@ fn CompanyIdTab() -> impl IntoView {
                                 <tr>
                                     <td>{code}</td>
                                     <td>{name}</td>
+                                    <td class={valid_class}>{if row.valid { "Yes" } else { "No" }}</td>
+                                    <td>
+                                        <button
+                                            class=if is_copied { "btn-copy copied" } else { "btn-copy" }
+                                            on:click=move |_| {
+                                                copy_to_clipboard(&copy_text);
+                                                copied_idx.set(Some(i));
+                                            }
+                                        >
+                                            {if is_copied { "Copied!" } else { "Copy" }}
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        }).collect_view()
+                    }}
+                </tbody>
+            </table>
+        </Show>
+    }
+}
+
+#[component]
+fn DriverLicenseTab() -> impl IntoView {
+    let registry = driver_license::Registry::new();
+    let countries: Vec<(String, String, String)> = registry
+        .list_countries()
+        .iter()
+        .map(|(c, n, d)| (c.to_string(), n.to_string(), d.to_string()))
+        .collect();
+
+    let country = RwSignal::new(
+        countries
+            .first()
+            .map(|(c, _, _)| c.clone())
+            .unwrap_or_default(),
+    );
+    let count = RwSignal::new(5u32);
+    let state_input = RwSignal::new(String::new());
+    let results: RwSignal<Vec<DriverLicenseRow>> = RwSignal::new(Vec::new());
+    let copied_idx: RwSignal<Option<usize>> = RwSignal::new(None);
+
+    let registry = StoredValue::new(registry);
+
+    let generate = move |_| {
+        let mut rng = thread_rng();
+        let c = country.get();
+        let n = count.get();
+        let s = state_input.get();
+        let mut rows = Vec::new();
+        let mut history_results = Vec::new();
+        registry.with_value(|reg| {
+            for _ in 0..n {
+                let opts = driver_license::GenOptions {
+                    country: Some(c.clone()),
+                    state: if s.is_empty() { None } else { Some(s.clone()) },
+                };
+                if let Some(res) = reg.generate(&opts, &mut rng) {
+                    history_results.push(res.code.clone());
+                    rows.push(DriverLicenseRow {
+                        code: res.code,
+                        name: res.name,
+                        country: format!("{} — {}", res.country_code, res.country_name),
+                        state: res.state,
+                        valid: res.valid,
+                    });
+                }
+            }
+        });
+        results.set(rows);
+        copied_idx.set(None);
+        add_to_history("Driver's License", &c, n, history_results);
+    };
+
+    let copy_all = move |_| {
+        let rows = results.get();
+        let text: String = rows.iter().map(|r| r.code.as_str()).collect::<Vec<_>>().join("\n");
+        copy_to_clipboard(&text);
+    };
+
+    let save_csv = move |_| {
+        let rows = results.get();
+        let mut csv = String::from("Code,Name,Country,State,Valid\n");
+        for row in rows.iter() {
+            csv.push_str(&format!(
+                "{},{},{},{},{}\n",
+                row.code,
+                row.name,
+                row.country,
+                row.state.as_deref().unwrap_or(""),
+                if row.valid { "Yes" } else { "No" }
+            ));
+        }
+        download_csv("driver_licenses.csv", &csv);
+    };
+
+    let save_json = move |_| {
+        let rows = results.get();
+        let json = serde_json::to_string_pretty(&rows).unwrap_or_default();
+        download_file("driver_licenses.json", &json, "application/json;charset=utf-8;");
+    };
+
+    let save_sql = move |_| {
+        let rows = results.get();
+        let mut sql = String::from("CREATE TABLE IF NOT EXISTS driver_licenses (code TEXT, name TEXT, country TEXT, state TEXT, valid BOOLEAN);\n");
+        for row in rows.iter() {
+            sql.push_str(&format!(
+                "INSERT INTO driver_licenses (code, name, country, state, valid) VALUES ('{}', '{}', '{}', '{}', {});\n",
+                row.code, row.name, row.country, row.state.as_deref().unwrap_or(""), row.valid
+            ));
+        }
+        download_file("driver_licenses.sql", &sql, "text/plain;charset=utf-8;");
+    };
+
+    let countries_for_select: Vec<(String, String)> = countries
+        .into_iter()
+        .map(|(c, n, _)| (c, n))
+        .collect();
+
+    view! {
+        <div class="controls">
+            <div class="field">
+                <label>"Country"</label>
+                <SearchableSelect
+                    options=countries_for_select
+                    selected=country
+                    on_change=Callback::new(|_| ())
+                />
+            </div>
+
+            <div class="field">
+                <label>"State (optional)"</label>
+                <input type="text" placeholder="e.g. CA"
+                    prop:value=move || state_input.get()
+                    on:input=move |ev| state_input.set(event_target_value(&ev))
+                />
+            </div>
+
+            <div class="field">
+                <label>"Count"</label>
+                <input type="number" min="1" max="100"
+                    prop:value=move || count.get().to_string()
+                    on:input=move |ev| {
+                        if let Ok(v) = event_target_value(&ev).parse::<u32>() {
+                            count.set(v.clamp(1, 100));
+                        }
+                    }
+                />
+            </div>
+
+            <button class="btn btn-primary" on:click=generate>"Generate"</button>
+
+            <Show when=move || !results.get().is_empty()>
+                <button class="btn btn-secondary" on:click=copy_all>"Copy all"</button>
+                <button class="btn btn-secondary" on:click=save_csv>"CSV"</button>
+                <button class="btn btn-secondary" on:click=save_json>"JSON"</button>
+                <button class="btn btn-secondary" on:click=save_sql>"SQL"</button>
+            </Show>
+        </div>
+
+        <Show when=move || results.get().is_empty()>
+            <div class="empty">"Select a country and click Generate"</div>
+        </Show>
+
+        <Show when=move || !results.get().is_empty()>
+            <div class="results-header">
+                <span>{move || format!("{} results", results.get().len())}</span>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>"Code"</th>
+                        <th>"Name"</th>
+                        <th>"State"</th>
+                        <th>"Valid"</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {move || {
+                        let cidx = copied_idx.get();
+                        results.get().iter().enumerate().map(|(i, row)| {
+                            let code = row.code.clone();
+                            let copy_text = code.clone();
+                            let name = row.name.clone();
+                            let state = row.state.clone().unwrap_or_default();
+                            let valid_class = if row.valid { "valid-yes" } else { "valid-no" };
+                            let is_copied = cidx == Some(i);
+                            view! {
+                                <tr>
+                                    <td>{code}</td>
+                                    <td>{name}</td>
+                                    <td>{state}</td>
+                                    <td class={valid_class}>{if row.valid { "Yes" } else { "No" }}</td>
+                                    <td>
+                                        <button
+                                            class=if is_copied { "btn-copy copied" } else { "btn-copy" }
+                                            on:click=move |_| {
+                                                copy_to_clipboard(&copy_text);
+                                                copied_idx.set(Some(i));
+                                            }
+                                        >
+                                            {if is_copied { "Copied!" } else { "Copy" }}
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        }).collect_view()
+                    }}
+                </tbody>
+            </table>
+        </Show>
+    }
+}
+
+#[component]
+fn PassportTab() -> impl IntoView {
+    let registry = passport::Registry::new();
+    let countries: Vec<(String, String, String)> = registry
+        .list_countries()
+        .iter()
+        .map(|(c, n, d)| (c.to_string(), n.to_string(), d.to_string()))
+        .collect();
+
+    let country = RwSignal::new(
+        countries
+            .first()
+            .map(|(c, _, _)| c.clone())
+            .unwrap_or_default(),
+    );
+    let count = RwSignal::new(5u32);
+    let results: RwSignal<Vec<PassportRow>> = RwSignal::new(Vec::new());
+    let copied_idx: RwSignal<Option<usize>> = RwSignal::new(None);
+
+    let registry = StoredValue::new(registry);
+
+    let generate = move |_| {
+        let mut rng = thread_rng();
+        let c = country.get();
+        let n = count.get();
+        let mut rows = Vec::new();
+        let mut history_results = Vec::new();
+        registry.with_value(|reg| {
+            for _ in 0..n {
+                let opts = passport::GenOptions {
+                    country: Some(c.clone()),
+                };
+                if let Some(res) = reg.generate(&opts, &mut rng) {
+                    history_results.push(res.code.clone());
+                    rows.push(PassportRow {
+                        code: res.code,
+                        name: res.name,
+                        country: format!("{} — {}", res.country_code, res.country_name),
+                        valid: res.valid,
+                    });
+                }
+            }
+        });
+        results.set(rows);
+        copied_idx.set(None);
+        add_to_history("Passport", &c, n, history_results);
+    };
+
+    let copy_all = move |_| {
+        let rows = results.get();
+        let text: String = rows.iter().map(|r| r.code.as_str()).collect::<Vec<_>>().join("\n");
+        copy_to_clipboard(&text);
+    };
+
+    let save_csv = move |_| {
+        let rows = results.get();
+        let mut csv = String::from("Code,Name,Country,Valid\n");
+        for row in rows.iter() {
+            csv.push_str(&format!(
+                "{},{},{},{}\n",
+                row.code,
+                row.name,
+                row.country,
+                if row.valid { "Yes" } else { "No" }
+            ));
+        }
+        download_csv("passports.csv", &csv);
+    };
+
+    let save_json = move |_| {
+        let rows = results.get();
+        let json = serde_json::to_string_pretty(&rows).unwrap_or_default();
+        download_file("passports.json", &json, "application/json;charset=utf-8;");
+    };
+
+    let save_sql = move |_| {
+        let rows = results.get();
+        let mut sql = String::from("CREATE TABLE IF NOT EXISTS passports (code TEXT, name TEXT, country TEXT, valid BOOLEAN);\n");
+        for row in rows.iter() {
+            sql.push_str(&format!(
+                "INSERT INTO passports (code, name, country, valid) VALUES ('{}', '{}', '{}', {});\n",
+                row.code, row.name, row.country, row.valid
+            ));
+        }
+        download_file("passports.sql", &sql, "text/plain;charset=utf-8;");
+    };
+
+    let countries_for_select: Vec<(String, String)> = countries
+        .into_iter()
+        .map(|(c, n, _)| (c, n))
+        .collect();
+
+    view! {
+        <div class="controls">
+            <div class="field">
+                <label>"Country"</label>
+                <SearchableSelect
+                    options=countries_for_select
+                    selected=country
+                    on_change=Callback::new(|_| ())
+                />
+            </div>
+
+            <div class="field">
+                <label>"Count"</label>
+                <input type="number" min="1" max="100"
+                    prop:value=move || count.get().to_string()
+                    on:input=move |ev| {
+                        if let Ok(v) = event_target_value(&ev).parse::<u32>() {
+                            count.set(v.clamp(1, 100));
+                        }
+                    }
+                />
+            </div>
+
+            <button class="btn btn-primary" on:click=generate>"Generate"</button>
+
+            <Show when=move || !results.get().is_empty()>
+                <button class="btn btn-secondary" on:click=copy_all>"Copy all"</button>
+                <button class="btn btn-secondary" on:click=save_csv>"CSV"</button>
+                <button class="btn btn-secondary" on:click=save_json>"JSON"</button>
+                <button class="btn btn-secondary" on:click=save_sql>"SQL"</button>
+            </Show>
+        </div>
+
+        <Show when=move || results.get().is_empty()>
+            <div class="empty">"Select a country and click Generate"</div>
+        </Show>
+
+        <Show when=move || !results.get().is_empty()>
+            <div class="results-header">
+                <span>{move || format!("{} results", results.get().len())}</span>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>"Code"</th>
+                        <th>"Name"</th>
+                        <th>"Valid"</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {move || {
+                        let cidx = copied_idx.get();
+                        results.get().iter().enumerate().map(|(i, row)| {
+                            let code = row.code.clone();
+                            let copy_text = code.clone();
+                            let name = row.name.clone();
+                            let valid_class = if row.valid { "valid-yes" } else { "valid-no" };
+                            let is_copied = cidx == Some(i);
+                            view! {
+                                <tr>
+                                    <td>{code}</td>
+                                    <td>{name}</td>
+                                    <td class={valid_class}>{if row.valid { "Yes" } else { "No" }}</td>
+                                    <td>
+                                        <button
+                                            class=if is_copied { "btn-copy copied" } else { "btn-copy" }
+                                            on:click=move |_| {
+                                                copy_to_clipboard(&copy_text);
+                                                copied_idx.set(Some(i));
+                                            }
+                                        >
+                                            {if is_copied { "Copied!" } else { "Copy" }}
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        }).collect_view()
+                    }}
+                </tbody>
+            </table>
+        </Show>
+    }
+}
+
+#[component]
+fn TaxIdTab() -> impl IntoView {
+    let registry = tax_id::Registry::new();
+    let countries: Vec<(String, String, String)> = registry
+        .list_countries()
+        .iter()
+        .map(|(c, n, d)| (c.to_string(), n.to_string(), d.to_string()))
+        .collect();
+
+    let country = RwSignal::new(
+        countries
+            .first()
+            .map(|(c, _, _)| c.clone())
+            .unwrap_or_default(),
+    );
+    let count = RwSignal::new(5u32);
+    let results: RwSignal<Vec<TaxIdRow>> = RwSignal::new(Vec::new());
+    let copied_idx: RwSignal<Option<usize>> = RwSignal::new(None);
+
+    let registry = StoredValue::new(registry);
+
+    let generate = move |_| {
+        let mut rng = thread_rng();
+        let c = country.get();
+        let n = count.get();
+        let mut rows = Vec::new();
+        let mut history_results = Vec::new();
+        registry.with_value(|reg| {
+            for _ in 0..n {
+                let opts = tax_id::GenOptions {
+                    country: Some(c.clone()),
+                    holder_type: None,
+                };
+                if let Some(res) = reg.generate(&opts, &mut rng) {
+                    history_results.push(res.code.clone());
+                    rows.push(TaxIdRow {
+                        code: res.code,
+                        name: res.name,
+                        country: format!("{} — {}", res.country_code, res.country_name),
+                        holder_type: res.holder_type,
+                        valid: res.valid,
+                    });
+                }
+            }
+        });
+        results.set(rows);
+        copied_idx.set(None);
+        add_to_history("Tax ID", &c, n, history_results);
+    };
+
+    let copy_all = move |_| {
+        let rows = results.get();
+        let text: String = rows.iter().map(|r| r.code.as_str()).collect::<Vec<_>>().join("\n");
+        copy_to_clipboard(&text);
+    };
+
+    let save_csv = move |_| {
+        let rows = results.get();
+        let mut csv = String::from("Code,Name,Type,Country,Valid\n");
+        for row in rows.iter() {
+            csv.push_str(&format!(
+                "{},{},{},{},{}\n",
+                row.code,
+                row.name,
+                row.holder_type.as_deref().unwrap_or(""),
+                row.country,
+                if row.valid { "Yes" } else { "No" }
+            ));
+        }
+        download_csv("tax_ids.csv", &csv);
+    };
+
+    let save_json = move |_| {
+        let rows = results.get();
+        let json = serde_json::to_string_pretty(&rows).unwrap_or_default();
+        download_file("tax_ids.json", &json, "application/json;charset=utf-8;");
+    };
+
+    let save_sql = move |_| {
+        let rows = results.get();
+        let mut sql = String::from("CREATE TABLE IF NOT EXISTS tax_ids (code TEXT, name TEXT, holder_type TEXT, country TEXT, valid BOOLEAN);\n");
+        for row in rows.iter() {
+            sql.push_str(&format!(
+                "INSERT INTO tax_ids (code, name, holder_type, country, valid) VALUES ('{}', '{}', '{}', '{}', {});\n",
+                row.code, row.name, row.holder_type.as_deref().unwrap_or(""), row.country, row.valid
+            ));
+        }
+        download_file("tax_ids.sql", &sql, "text/plain;charset=utf-8;");
+    };
+
+    let countries_for_select: Vec<(String, String)> = countries
+        .into_iter()
+        .map(|(c, n, _)| (c, n))
+        .collect();
+
+    view! {
+        <div class="controls">
+            <div class="field">
+                <label>"Country"</label>
+                <SearchableSelect
+                    options=countries_for_select
+                    selected=country
+                    on_change=Callback::new(|_| ())
+                />
+            </div>
+
+            <div class="field">
+                <label>"Count"</label>
+                <input type="number" min="1" max="100"
+                    prop:value=move || count.get().to_string()
+                    on:input=move |ev| {
+                        if let Ok(v) = event_target_value(&ev).parse::<u32>() {
+                            count.set(v.clamp(1, 100));
+                        }
+                    }
+                />
+            </div>
+
+            <button class="btn btn-primary" on:click=generate>"Generate"</button>
+
+            <Show when=move || !results.get().is_empty()>
+                <button class="btn btn-secondary" on:click=copy_all>"Copy all"</button>
+                <button class="btn btn-secondary" on:click=save_csv>"CSV"</button>
+                <button class="btn btn-secondary" on:click=save_json>"JSON"</button>
+                <button class="btn btn-secondary" on:click=save_sql>"SQL"</button>
+            </Show>
+        </div>
+
+        <Show when=move || results.get().is_empty()>
+            <div class="empty">"Select a country and click Generate"</div>
+        </Show>
+
+        <Show when=move || !results.get().is_empty()>
+            <div class="results-header">
+                <span>{move || format!("{} results", results.get().len())}</span>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>"Code"</th>
+                        <th>"Name"</th>
+                        <th>"Type"</th>
+                        <th>"Valid"</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {move || {
+                        let cidx = copied_idx.get();
+                        results.get().iter().enumerate().map(|(i, row)| {
+                            let code = row.code.clone();
+                            let copy_text = code.clone();
+                            let name = row.name.clone();
+                            let holder_type = row.holder_type.clone().unwrap_or_default();
+                            let valid_class = if row.valid { "valid-yes" } else { "valid-no" };
+                            let is_copied = cidx == Some(i);
+                            view! {
+                                <tr>
+                                    <td>{code}</td>
+                                    <td>{name}</td>
+                                    <td>{holder_type}</td>
+                                    <td class={valid_class}>{if row.valid { "Yes" } else { "No" }}</td>
+                                    <td>
+                                        <button
+                                            class=if is_copied { "btn-copy copied" } else { "btn-copy" }
+                                            on:click=move |_| {
+                                                copy_to_clipboard(&copy_text);
+                                                copied_idx.set(Some(i));
+                                            }
+                                        >
+                                            {if is_copied { "Copied!" } else { "Copy" }}
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        }).collect_view()
+                    }}
+                </tbody>
+            </table>
+        </Show>
+    }
+}
+
+#[component]
+fn VatTab() -> impl IntoView {
+    let registry = vat::Registry::new();
+    let countries: Vec<(String, String)> = registry
+        .list_countries()
+        .iter()
+        .map(|(c, n)| (c.to_string(), n.to_string()))
+        .collect();
+
+    let country = RwSignal::new(
+        countries
+            .first()
+            .map(|(c, _)| c.clone())
+            .unwrap_or_default(),
+    );
+    let count = RwSignal::new(5u32);
+    let results: RwSignal<Vec<VatRow>> = RwSignal::new(Vec::new());
+    let copied_idx: RwSignal<Option<usize>> = RwSignal::new(None);
+
+    let registry = StoredValue::new(registry);
+
+    let generate = move |_| {
+        let mut rng = thread_rng();
+        let c = country.get();
+        let n = count.get();
+        let mut rows = Vec::new();
+        let mut history_results = Vec::new();
+        registry.with_value(|reg| {
+            for _ in 0..n {
+                let opts = vat::GenOptions {
+                    country: Some(c.clone()),
+                };
+                if let Some(res) = reg.generate(&opts, &mut rng) {
+                    history_results.push(res.code.clone());
+                    rows.push(VatRow {
+                        code: res.code,
+                        country_code: res.country_code,
+                        country_name: res.country_name,
+                        valid: res.valid,
+                    });
+                }
+            }
+        });
+        results.set(rows);
+        copied_idx.set(None);
+        add_to_history("VAT", &c, n, history_results);
+    };
+
+    let copy_all = move |_| {
+        let rows = results.get();
+        let text: String = rows.iter().map(|r| r.code.as_str()).collect::<Vec<_>>().join("\n");
+        copy_to_clipboard(&text);
+    };
+
+    let save_csv = move |_| {
+        let rows = results.get();
+        let mut csv = String::from("Code,Country Code,Country Name,Valid\n");
+        for row in rows.iter() {
+            csv.push_str(&format!(
+                "{},{},{},{}\n",
+                row.code,
+                row.country_code,
+                row.country_name,
+                if row.valid { "Yes" } else { "No" }
+            ));
+        }
+        download_csv("vat_numbers.csv", &csv);
+    };
+
+    let save_json = move |_| {
+        let rows = results.get();
+        let json = serde_json::to_string_pretty(&rows).unwrap_or_default();
+        download_file("vat_numbers.json", &json, "application/json;charset=utf-8;");
+    };
+
+    let save_sql = move |_| {
+        let rows = results.get();
+        let mut sql = String::from("CREATE TABLE IF NOT EXISTS vat_numbers (code TEXT, country_code TEXT, country_name TEXT, valid BOOLEAN);\n");
+        for row in rows.iter() {
+            sql.push_str(&format!(
+                "INSERT INTO vat_numbers (code, country_code, country_name, valid) VALUES ('{}', '{}', '{}', {});\n",
+                row.code, row.country_code, row.country_name, row.valid
+            ));
+        }
+        download_file("vat_numbers.sql", &sql, "text/plain;charset=utf-8;");
+    };
+
+    let countries_for_select = countries.clone();
+
+    view! {
+        <div class="controls">
+            <div class="field">
+                <label>"Country"</label>
+                <SearchableSelect
+                    options=countries_for_select
+                    selected=country
+                    on_change=Callback::new(|_| ())
+                />
+            </div>
+
+            <div class="field">
+                <label>"Count"</label>
+                <input type="number" min="1" max="100"
+                    prop:value=move || count.get().to_string()
+                    on:input=move |ev| {
+                        if let Ok(v) = event_target_value(&ev).parse::<u32>() {
+                            count.set(v.clamp(1, 100));
+                        }
+                    }
+                />
+            </div>
+
+            <button class="btn btn-primary" on:click=generate>"Generate"</button>
+
+            <Show when=move || !results.get().is_empty()>
+                <button class="btn btn-secondary" on:click=copy_all>"Copy all"</button>
+                <button class="btn btn-secondary" on:click=save_csv>"CSV"</button>
+                <button class="btn btn-secondary" on:click=save_json>"JSON"</button>
+                <button class="btn btn-secondary" on:click=save_sql>"SQL"</button>
+            </Show>
+        </div>
+
+        <Show when=move || results.get().is_empty()>
+            <div class="empty">"Select a country and click Generate"</div>
+        </Show>
+
+        <Show when=move || !results.get().is_empty()>
+            <div class="results-header">
+                <span>{move || format!("{} results", results.get().len())}</span>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>"Code"</th>
+                        <th>"Country"</th>
+                        <th>"Valid"</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {move || {
+                        let cidx = copied_idx.get();
+                        results.get().iter().enumerate().map(|(i, row)| {
+                            let code = row.code.clone();
+                            let copy_text = code.clone();
+                            let country_display = format!("{} — {}", row.country_code, row.country_name);
+                            let valid_class = if row.valid { "valid-yes" } else { "valid-no" };
+                            let is_copied = cidx == Some(i);
+                            view! {
+                                <tr>
+                                    <td>{code}</td>
+                                    <td>{country_display}</td>
+                                    <td class={valid_class}>{if row.valid { "Yes" } else { "No" }}</td>
+                                    <td>
+                                        <button
+                                            class=if is_copied { "btn-copy copied" } else { "btn-copy" }
+                                            on:click=move |_| {
+                                                copy_to_clipboard(&copy_text);
+                                                copied_idx.set(Some(i));
+                                            }
+                                        >
+                                            {if is_copied { "Copied!" } else { "Copy" }}
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        }).collect_view()
+                    }}
+                </tbody>
+            </table>
+        </Show>
+    }
+}
+
+#[component]
+fn LeiTab() -> impl IntoView {
+    let registry = lei::Registry::new();
+
+    let count = RwSignal::new(5u32);
+    let country = RwSignal::new(String::new());
+    let results: RwSignal<Vec<LeiRow>> = RwSignal::new(Vec::new());
+    let copied_idx: RwSignal<Option<usize>> = RwSignal::new(None);
+
+    let registry = StoredValue::new(registry);
+
+    let generate = move |_| {
+        let mut rng = thread_rng();
+        let n = count.get();
+        let c = country.get();
+        let mut rows = Vec::new();
+        let mut history_results = Vec::new();
+        registry.with_value(|reg| {
+            for _ in 0..n {
+                let opts = lei::GenOptions {
+                    country: if c.is_empty() { None } else { Some(c.clone()) },
+                };
+                let res = reg.generate(&opts, &mut rng);
+                history_results.push(res.code.clone());
+                rows.push(LeiRow {
+                    code: res.code,
+                    lou: res.lou,
+                    country_code: res.country_code,
+                    valid: res.valid,
+                });
+            }
+        });
+        results.set(rows);
+        copied_idx.set(None);
+        add_to_history("LEI", if c.is_empty() { "Random" } else { &c }, n, history_results);
+    };
+
+    let copy_all = move |_| {
+        let rows = results.get();
+        let text: String = rows.iter().map(|r| r.code.as_str()).collect::<Vec<_>>().join("\n");
+        copy_to_clipboard(&text);
+    };
+
+    let save_csv = move |_| {
+        let rows = results.get();
+        let mut csv = String::from("Code,LOU,Country,Valid\n");
+        for row in rows.iter() {
+            csv.push_str(&format!(
+                "{},{},{},{}\n",
+                row.code,
+                row.lou,
+                row.country_code,
+                if row.valid { "Yes" } else { "No" }
+            ));
+        }
+        download_csv("lei_codes.csv", &csv);
+    };
+
+    let save_json = move |_| {
+        let rows = results.get();
+        let json = serde_json::to_string_pretty(&rows).unwrap_or_default();
+        download_file("lei_codes.json", &json, "application/json;charset=utf-8;");
+    };
+
+    let save_sql = move |_| {
+        let rows = results.get();
+        let mut sql = String::from("CREATE TABLE IF NOT EXISTS lei_codes (code TEXT, lou TEXT, country_code TEXT, valid BOOLEAN);\n");
+        for row in rows.iter() {
+            sql.push_str(&format!(
+                "INSERT INTO lei_codes (code, lou, country_code, valid) VALUES ('{}', '{}', '{}', {});\n",
+                row.code, row.lou, row.country_code, row.valid
+            ));
+        }
+        download_file("lei_codes.sql", &sql, "text/plain;charset=utf-8;");
+    };
+
+    view! {
+        <div class="controls">
+            <div class="field">
+                <label>"Country (optional)"</label>
+                <input type="text" placeholder="e.g. US (leave empty for random)"
+                    prop:value=move || country.get()
+                    on:input=move |ev| country.set(event_target_value(&ev))
+                />
+            </div>
+
+            <div class="field">
+                <label>"Count"</label>
+                <input type="number" min="1" max="100"
+                    prop:value=move || count.get().to_string()
+                    on:input=move |ev| {
+                        if let Ok(v) = event_target_value(&ev).parse::<u32>() {
+                            count.set(v.clamp(1, 100));
+                        }
+                    }
+                />
+            </div>
+
+            <button class="btn btn-primary" on:click=generate>"Generate"</button>
+
+            <Show when=move || !results.get().is_empty()>
+                <button class="btn btn-secondary" on:click=copy_all>"Copy all"</button>
+                <button class="btn btn-secondary" on:click=save_csv>"CSV"</button>
+                <button class="btn btn-secondary" on:click=save_json>"JSON"</button>
+                <button class="btn btn-secondary" on:click=save_sql>"SQL"</button>
+            </Show>
+        </div>
+
+        <Show when=move || results.get().is_empty()>
+            <div class="empty">"Click Generate to create LEI codes"</div>
+        </Show>
+
+        <Show when=move || !results.get().is_empty()>
+            <div class="results-header">
+                <span>{move || format!("{} results", results.get().len())}</span>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>"Code"</th>
+                        <th>"LOU"</th>
+                        <th>"Country"</th>
+                        <th>"Valid"</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {move || {
+                        let cidx = copied_idx.get();
+                        results.get().iter().enumerate().map(|(i, row)| {
+                            let code = row.code.clone();
+                            let copy_text = code.clone();
+                            let lou = row.lou.clone();
+                            let country_code = row.country_code.clone();
+                            let valid_class = if row.valid { "valid-yes" } else { "valid-no" };
+                            let is_copied = cidx == Some(i);
+                            view! {
+                                <tr>
+                                    <td>{code}</td>
+                                    <td>{lou}</td>
+                                    <td>{country_code}</td>
                                     <td class={valid_class}>{if row.valid { "Yes" } else { "No" }}</td>
                                     <td>
                                         <button
@@ -1631,6 +2600,11 @@ fn ValidatorTab() -> impl IntoView {
     let card_registry = credit_card::Registry::new();
     let swift_registry = swift::Registry::new();
     let company_registry = company_id::Registry::new();
+    let dl_registry = driver_license::Registry::new();
+    let passport_registry = passport::Registry::new();
+    let tax_registry = tax_id::Registry::new();
+    let vat_registry = vat::Registry::new();
+    let lei_registry = lei::Registry::new();
 
     let id_countries: Vec<(String, String)> = id_registry
         .list_countries()
@@ -1650,15 +2624,41 @@ fn ValidatorTab() -> impl IntoView {
         .map(|(c, n, _)| (c.to_string(), n.to_string()))
         .collect();
 
+    let dl_countries: Vec<(String, String)> = dl_registry
+        .list_countries()
+        .iter()
+        .map(|(c, n, _)| (c.to_string(), n.to_string()))
+        .collect();
+
+    let passport_countries: Vec<(String, String)> = passport_registry
+        .list_countries()
+        .iter()
+        .map(|(c, n, _)| (c.to_string(), n.to_string()))
+        .collect();
+
+    let tax_countries: Vec<(String, String)> = tax_registry
+        .list_countries()
+        .iter()
+        .map(|(c, n, _)| (c.to_string(), n.to_string()))
+        .collect();
+
     let id_countries = StoredValue::new(id_countries);
     let bank_countries = StoredValue::new(bank_countries);
     let company_countries = StoredValue::new(company_countries);
+    let dl_countries = StoredValue::new(dl_countries);
+    let passport_countries = StoredValue::new(passport_countries);
+    let tax_countries = StoredValue::new(tax_countries);
 
     let id_registry = StoredValue::new(id_registry);
     let bank_registry = StoredValue::new(bank_registry);
     let card_registry = StoredValue::new(card_registry);
     let swift_registry = StoredValue::new(swift_registry);
     let company_registry = StoredValue::new(company_registry);
+    let dl_registry = StoredValue::new(dl_registry);
+    let passport_registry = StoredValue::new(passport_registry);
+    let tax_registry = StoredValue::new(tax_registry);
+    let vat_registry = StoredValue::new(vat_registry);
+    let lei_registry = StoredValue::new(lei_registry);
 
     let validate = move |_| {
         let val = input_value.get().trim().to_string();
@@ -1755,6 +2755,71 @@ fn ValidatorTab() -> impl IntoView {
                     )));
                 });
             }
+            "driver_license" => {
+                dl_registry.with_value(|reg| {
+                    let is_valid = reg.validate(&country.get(), &val);
+                    result.set(Some((
+                        is_valid,
+                        if is_valid {
+                            "Valid Driver's License for selected country".to_string()
+                        } else {
+                            "Invalid Driver's License format".to_string()
+                        },
+                    )));
+                });
+            }
+            "passport" => {
+                passport_registry.with_value(|reg| {
+                    let is_valid = reg.validate(&country.get(), &val);
+                    result.set(Some((
+                        is_valid,
+                        if is_valid {
+                            "Valid Passport for selected country".to_string()
+                        } else {
+                            "Invalid Passport format".to_string()
+                        },
+                    )));
+                });
+            }
+            "tax_id" => {
+                tax_registry.with_value(|reg| {
+                    let is_valid = reg.validate(&country.get(), &val);
+                    result.set(Some((
+                        is_valid,
+                        if is_valid {
+                            "Valid Tax ID for selected country".to_string()
+                        } else {
+                            "Invalid Tax ID format".to_string()
+                        },
+                    )));
+                });
+            }
+            "vat" => {
+                vat_registry.with_value(|reg| {
+                    let is_valid = reg.validate(&val);
+                    result.set(Some((
+                        is_valid,
+                        if is_valid {
+                            "Valid VAT number".to_string()
+                        } else {
+                            "Invalid VAT number format".to_string()
+                        },
+                    )));
+                });
+            }
+            "lei" => {
+                lei_registry.with_value(|reg| {
+                    let is_valid = reg.validate(&val);
+                    result.set(Some((
+                        is_valid,
+                        if is_valid {
+                            "Valid LEI code".to_string()
+                        } else {
+                            "Invalid LEI code format".to_string()
+                        },
+                    )));
+                });
+            }
             _ => {}
         }
     };
@@ -1768,9 +2833,12 @@ fn ValidatorTab() -> impl IntoView {
                         let t = event_target_value(&ev);
                         selected_type.set(t.clone());
                         result.set(None);
-                        if t == "id" { country.set("DE".to_string()); }
-                        else if t == "bank" { country.set("US".to_string()); }
-                        else if t == "company" { country.set("EE".to_string()); }
+                        match t.as_str() {
+                            "id" => country.set("DE".to_string()),
+                            "bank" => country.set("US".to_string()),
+                            "company" | "driver_license" | "passport" | "tax_id" => country.set("EE".to_string()),
+                            _ => {}
+                        }
                     }>
                         <option value="iban">"IBAN"</option>
                         <option value="id">"Personal ID"</option>
@@ -1778,12 +2846,17 @@ fn ValidatorTab() -> impl IntoView {
                         <option value="card">"Credit Card"</option>
                         <option value="swift">"SWIFT/BIC"</option>
                         <option value="company">"Company ID"</option>
+                        <option value="driver_license">"Driver's License"</option>
+                        <option value="passport">"Passport"</option>
+                        <option value="tax_id">"Tax ID"</option>
+                        <option value="vat">"VAT"</option>
+                        <option value="lei">"LEI"</option>
                     </select>
                 </div>
 
                 <Show when=move || {
                     let t = selected_type.get();
-                    t == "id" || t == "bank" || t == "company"
+                    t == "id" || t == "bank" || t == "company" || t == "driver_license" || t == "passport" || t == "tax_id"
                 }>
                     <div class="field">
                         <label>"Country"</label>
@@ -1792,6 +2865,9 @@ fn ValidatorTab() -> impl IntoView {
                                 "id" => id_countries.get_value(),
                                 "bank" => bank_countries.get_value(),
                                 "company" => company_countries.get_value(),
+                                "driver_license" => dl_countries.get_value(),
+                                "passport" => passport_countries.get_value(),
+                                "tax_id" => tax_countries.get_value(),
                                 _ => Vec::new(),
                             };
                             view! {

@@ -1,6 +1,6 @@
 # <img src="assets/logo.svg" width="48" height="48" valign="bottom" /> MockBanker
 
-Generate and validate valid, checksum-correct **IBANs**, **Personal IDs**, **Credit Cards**, and more directly in your browser. No installation, no server — everything runs client-side via WebAssembly.
+Generate and validate valid, checksum-correct **IBANs**, **Personal IDs**, **Passports**, **Driver's Licenses**, **Tax IDs**, **VAT numbers**, **LEI codes**, **Credit Cards**, and more directly in your browser. No installation, no server — everything runs client-side via WebAssembly.
 
 **[Try it live](https://tonybenoy.github.io/mockbanker/)**
 
@@ -13,12 +13,18 @@ Generate and validate valid, checksum-correct **IBANs**, **Personal IDs**, **Cre
 
 ## Features
 
-- **IBAN Generation & Validation** — 96 countries supported, every code passes mod-97 checksum validation.
-- **Personal ID Generation** — 31 formats including PESEL, personnummer, codice fiscale, JMBG, BSN, NIR, DNI, NIF, EGN, AMKA, and more.
-- **Bank Accounts & SWIFT/BIC** — Generate test account numbers and routing codes for various countries.
+- **IBAN Generation & Validation** — 124 countries supported, every code passes mod-97 checksum validation.
+- **Personal ID Generation** — 97 formats including PESEL, personnummer, codice fiscale, JMBG, BSN, NIR, DNI, NIF, EGN, AMKA, and more.
+- **Bank Accounts & SWIFT/BIC** — Generate test account numbers and routing codes for 159 bank account formats.
 - **Credit Cards** — Generate valid test card numbers (Visa, Mastercard, etc.) that pass Luhn checksum.
 - **Company IDs** — Generate valid company registration numbers for supported countries.
-- **Validator Tab** — (New) Validate IBANs, Personal IDs, Credit Cards, SWIFT codes, and Company IDs directly in the app.
+- **Driver's Licenses** — Generate valid driver's license numbers across 79 formats.
+- **Passports** — Generate valid passport numbers across 79 formats.
+- **Tax IDs** — Generate valid tax identification numbers (PAN, TIN, etc.) across 80 formats with checksums.
+- **VAT Numbers** — Generate valid EU VAT numbers across 28 formats.
+- **LEI Codes** — Generate valid Legal Entity Identifiers per ISO 17442.
+- **Validator Tab** — Validate IBANs, Personal IDs, Credit Cards, SWIFT codes, Company IDs, Driver's Licenses, Passports, Tax IDs, VAT numbers, and LEI codes directly in the app.
+- **Export** — Download results as CSV, JSON, or SQL for all generator types.
 - **PWA / Offline Support** — Install it on your device and use it without an internet connection.
 - **Click-to-copy** — copy individual rows or all results at once.
 - **Zero backend** — all logic runs in WASM, nothing leaves your browser.
