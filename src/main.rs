@@ -4,7 +4,10 @@ use rand::thread_rng;
 use wasm_bindgen::JsCast;
 use wasm_bindgen::prelude::*;
 
-use idsmith::{bank_account, company_id, countries, credit_card, driver_license, iban, lei, passport, personal_id, swift, tax_id, vat};
+use idsmith::{
+    bank_account, company_id, countries, credit_card, driver_license, iban, lei, passport,
+    personal_id, swift, tax_id, vat,
+};
 
 #[wasm_bindgen(inline_js = r#"
 export function copy_text(text) {
@@ -979,12 +982,18 @@ fn BankAccountTab() -> impl IntoView {
     let save_json = move |_| {
         let rows = results.get();
         let json = serde_json::to_string_pretty(&rows).unwrap_or_default();
-        download_file("bank_accounts.json", &json, "application/json;charset=utf-8;");
+        download_file(
+            "bank_accounts.json",
+            &json,
+            "application/json;charset=utf-8;",
+        );
     };
 
     let save_sql = move |_| {
         let rows = results.get();
-        let mut sql = String::from("CREATE TABLE IF NOT EXISTS bank_accounts (account TEXT, routing TEXT, valid BOOLEAN);\n");
+        let mut sql = String::from(
+            "CREATE TABLE IF NOT EXISTS bank_accounts (account TEXT, routing TEXT, valid BOOLEAN);\n",
+        );
         for row in rows.iter() {
             sql.push_str(&format!(
                 "INSERT INTO bank_accounts (account, routing, valid) VALUES ('{}', '{}', {});\n",
@@ -1151,12 +1160,18 @@ fn CreditCardTab() -> impl IntoView {
     let save_json = move |_| {
         let rows = results.get();
         let json = serde_json::to_string_pretty(&rows).unwrap_or_default();
-        download_file("credit_cards.json", &json, "application/json;charset=utf-8;");
+        download_file(
+            "credit_cards.json",
+            &json,
+            "application/json;charset=utf-8;",
+        );
     };
 
     let save_sql = move |_| {
         let rows = results.get();
-        let mut sql = String::from("CREATE TABLE IF NOT EXISTS credit_cards (number TEXT, brand TEXT, valid BOOLEAN);\n");
+        let mut sql = String::from(
+            "CREATE TABLE IF NOT EXISTS credit_cards (number TEXT, brand TEXT, valid BOOLEAN);\n",
+        );
         for row in rows.iter() {
             sql.push_str(&format!(
                 "INSERT INTO credit_cards (number, brand, valid) VALUES ('{}', '{}', {});\n",
@@ -1334,7 +1349,9 @@ fn SwiftTab() -> impl IntoView {
 
     let save_sql = move |_| {
         let rows = results.get();
-        let mut sql = String::from("CREATE TABLE IF NOT EXISTS swift_codes (code TEXT, bank TEXT, country TEXT, location TEXT, valid BOOLEAN);\n");
+        let mut sql = String::from(
+            "CREATE TABLE IF NOT EXISTS swift_codes (code TEXT, bank TEXT, country TEXT, location TEXT, valid BOOLEAN);\n",
+        );
         for row in rows.iter() {
             sql.push_str(&format!(
                 "INSERT INTO swift_codes (code, bank, country, location, valid) VALUES ('{}', '{}', '{}', '{}', {});\n",
@@ -1512,7 +1529,9 @@ fn CompanyIdTab() -> impl IntoView {
 
     let save_sql = move |_| {
         let rows = results.get();
-        let mut sql = String::from("CREATE TABLE IF NOT EXISTS company_ids (code TEXT, name TEXT, valid BOOLEAN);\n");
+        let mut sql = String::from(
+            "CREATE TABLE IF NOT EXISTS company_ids (code TEXT, name TEXT, valid BOOLEAN);\n",
+        );
         for row in rows.iter() {
             sql.push_str(&format!(
                 "INSERT INTO company_ids (code, name, valid) VALUES ('{}', '{}', {});\n",
@@ -1667,7 +1686,11 @@ fn DriverLicenseTab() -> impl IntoView {
 
     let copy_all = move |_| {
         let rows = results.get();
-        let text: String = rows.iter().map(|r| r.code.as_str()).collect::<Vec<_>>().join("\n");
+        let text: String = rows
+            .iter()
+            .map(|r| r.code.as_str())
+            .collect::<Vec<_>>()
+            .join("\n");
         copy_to_clipboard(&text);
     };
 
@@ -1690,12 +1713,18 @@ fn DriverLicenseTab() -> impl IntoView {
     let save_json = move |_| {
         let rows = results.get();
         let json = serde_json::to_string_pretty(&rows).unwrap_or_default();
-        download_file("driver_licenses.json", &json, "application/json;charset=utf-8;");
+        download_file(
+            "driver_licenses.json",
+            &json,
+            "application/json;charset=utf-8;",
+        );
     };
 
     let save_sql = move |_| {
         let rows = results.get();
-        let mut sql = String::from("CREATE TABLE IF NOT EXISTS driver_licenses (code TEXT, name TEXT, country TEXT, state TEXT, valid BOOLEAN);\n");
+        let mut sql = String::from(
+            "CREATE TABLE IF NOT EXISTS driver_licenses (code TEXT, name TEXT, country TEXT, state TEXT, valid BOOLEAN);\n",
+        );
         for row in rows.iter() {
             sql.push_str(&format!(
                 "INSERT INTO driver_licenses (code, name, country, state, valid) VALUES ('{}', '{}', '{}', '{}', {});\n",
@@ -1705,10 +1734,8 @@ fn DriverLicenseTab() -> impl IntoView {
         download_file("driver_licenses.sql", &sql, "text/plain;charset=utf-8;");
     };
 
-    let countries_for_select: Vec<(String, String)> = countries
-        .into_iter()
-        .map(|(c, n, _)| (c, n))
-        .collect();
+    let countries_for_select: Vec<(String, String)> =
+        countries.into_iter().map(|(c, n, _)| (c, n)).collect();
 
     view! {
         <div class="controls">
@@ -1856,7 +1883,11 @@ fn PassportTab() -> impl IntoView {
 
     let copy_all = move |_| {
         let rows = results.get();
-        let text: String = rows.iter().map(|r| r.code.as_str()).collect::<Vec<_>>().join("\n");
+        let text: String = rows
+            .iter()
+            .map(|r| r.code.as_str())
+            .collect::<Vec<_>>()
+            .join("\n");
         copy_to_clipboard(&text);
     };
 
@@ -1883,7 +1914,9 @@ fn PassportTab() -> impl IntoView {
 
     let save_sql = move |_| {
         let rows = results.get();
-        let mut sql = String::from("CREATE TABLE IF NOT EXISTS passports (code TEXT, name TEXT, country TEXT, valid BOOLEAN);\n");
+        let mut sql = String::from(
+            "CREATE TABLE IF NOT EXISTS passports (code TEXT, name TEXT, country TEXT, valid BOOLEAN);\n",
+        );
         for row in rows.iter() {
             sql.push_str(&format!(
                 "INSERT INTO passports (code, name, country, valid) VALUES ('{}', '{}', '{}', {});\n",
@@ -1893,10 +1926,8 @@ fn PassportTab() -> impl IntoView {
         download_file("passports.sql", &sql, "text/plain;charset=utf-8;");
     };
 
-    let countries_for_select: Vec<(String, String)> = countries
-        .into_iter()
-        .map(|(c, n, _)| (c, n))
-        .collect();
+    let countries_for_select: Vec<(String, String)> =
+        countries.into_iter().map(|(c, n, _)| (c, n)).collect();
 
     view! {
         <div class="controls">
@@ -2035,7 +2066,11 @@ fn TaxIdTab() -> impl IntoView {
 
     let copy_all = move |_| {
         let rows = results.get();
-        let text: String = rows.iter().map(|r| r.code.as_str()).collect::<Vec<_>>().join("\n");
+        let text: String = rows
+            .iter()
+            .map(|r| r.code.as_str())
+            .collect::<Vec<_>>()
+            .join("\n");
         copy_to_clipboard(&text);
     };
 
@@ -2063,7 +2098,9 @@ fn TaxIdTab() -> impl IntoView {
 
     let save_sql = move |_| {
         let rows = results.get();
-        let mut sql = String::from("CREATE TABLE IF NOT EXISTS tax_ids (code TEXT, name TEXT, holder_type TEXT, country TEXT, valid BOOLEAN);\n");
+        let mut sql = String::from(
+            "CREATE TABLE IF NOT EXISTS tax_ids (code TEXT, name TEXT, holder_type TEXT, country TEXT, valid BOOLEAN);\n",
+        );
         for row in rows.iter() {
             sql.push_str(&format!(
                 "INSERT INTO tax_ids (code, name, holder_type, country, valid) VALUES ('{}', '{}', '{}', '{}', {});\n",
@@ -2073,10 +2110,8 @@ fn TaxIdTab() -> impl IntoView {
         download_file("tax_ids.sql", &sql, "text/plain;charset=utf-8;");
     };
 
-    let countries_for_select: Vec<(String, String)> = countries
-        .into_iter()
-        .map(|(c, n, _)| (c, n))
-        .collect();
+    let countries_for_select: Vec<(String, String)> =
+        countries.into_iter().map(|(c, n, _)| (c, n)).collect();
 
     view! {
         <div class="controls">
@@ -2216,7 +2251,11 @@ fn VatTab() -> impl IntoView {
 
     let copy_all = move |_| {
         let rows = results.get();
-        let text: String = rows.iter().map(|r| r.code.as_str()).collect::<Vec<_>>().join("\n");
+        let text: String = rows
+            .iter()
+            .map(|r| r.code.as_str())
+            .collect::<Vec<_>>()
+            .join("\n");
         copy_to_clipboard(&text);
     };
 
@@ -2243,7 +2282,9 @@ fn VatTab() -> impl IntoView {
 
     let save_sql = move |_| {
         let rows = results.get();
-        let mut sql = String::from("CREATE TABLE IF NOT EXISTS vat_numbers (code TEXT, country_code TEXT, country_name TEXT, valid BOOLEAN);\n");
+        let mut sql = String::from(
+            "CREATE TABLE IF NOT EXISTS vat_numbers (code TEXT, country_code TEXT, country_name TEXT, valid BOOLEAN);\n",
+        );
         for row in rows.iter() {
             sql.push_str(&format!(
                 "INSERT INTO vat_numbers (code, country_code, country_name, valid) VALUES ('{}', '{}', '{}', {});\n",
@@ -2374,12 +2415,21 @@ fn LeiTab() -> impl IntoView {
         });
         results.set(rows);
         copied_idx.set(None);
-        add_to_history("LEI", if c.is_empty() { "Random" } else { &c }, n, history_results);
+        add_to_history(
+            "LEI",
+            if c.is_empty() { "Random" } else { &c },
+            n,
+            history_results,
+        );
     };
 
     let copy_all = move |_| {
         let rows = results.get();
-        let text: String = rows.iter().map(|r| r.code.as_str()).collect::<Vec<_>>().join("\n");
+        let text: String = rows
+            .iter()
+            .map(|r| r.code.as_str())
+            .collect::<Vec<_>>()
+            .join("\n");
         copy_to_clipboard(&text);
     };
 
@@ -2406,7 +2456,9 @@ fn LeiTab() -> impl IntoView {
 
     let save_sql = move |_| {
         let rows = results.get();
-        let mut sql = String::from("CREATE TABLE IF NOT EXISTS lei_codes (code TEXT, lou TEXT, country_code TEXT, valid BOOLEAN);\n");
+        let mut sql = String::from(
+            "CREATE TABLE IF NOT EXISTS lei_codes (code TEXT, lou TEXT, country_code TEXT, valid BOOLEAN);\n",
+        );
         for row in rows.iter() {
             sql.push_str(&format!(
                 "INSERT INTO lei_codes (code, lou, country_code, valid) VALUES ('{}', '{}', '{}', {});\n",
@@ -2569,7 +2621,8 @@ fn SearchableSelect(
                                 view! {
                                     <div
                                         class=format!("dropdown-item {}", if is_selected { "selected" } else { "" })
-                                        on:click=move |_| {
+                                        on:mousedown=move |ev| {
+                                            ev.prevent_default();
                                             selected.set(code_c.clone());
                                             search_text.set(String::new());
                                             is_open.set(false);
