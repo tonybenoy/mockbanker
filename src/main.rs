@@ -1117,8 +1117,10 @@ fn CreditCardTab() -> impl IntoView {
         let mut rows = Vec::new();
         registry.with_value(|reg| {
             for _ in 0..n {
+                let year = (js_sys::Date::new_0().get_full_year() % 100) as u16;
                 let opts = credit_card::GenOptions {
                     brand: Some(b.clone()),
+                    current_year: Some(year),
                 };
                 if let Some(res) = reg.generate(&opts, &mut rng) {
                     rows.push(CreditCardRow {
