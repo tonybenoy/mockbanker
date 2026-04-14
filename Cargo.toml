@@ -11,7 +11,7 @@ categories = ["wasm", "web-programming", "development-tools::testing"]
 
 [dependencies]
 leptos = { version = "0.7", features = ["csr"] }
-rand = "0.8"
+rand = "0.9"
 getrandom = { version = "0.2", features = ["js"] }
 wasm-bindgen = "0.2"
 idsmith = { version = "0.5.4", default-features = false }
